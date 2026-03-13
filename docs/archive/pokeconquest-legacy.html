@@ -1,0 +1,2579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medieval Pokemon Conquest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@400;700&display=swap');
+        
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #0a0c12 0%, #12151f 50%, #0a0c12 100%);
+            color: #e0e0e0;
+            font-family: 'Lato', system-ui, sans-serif;
+            user-select: none;
+        }
+        main { display: block; cursor: crosshair; }
+        
+        /* Pokemon-style panel */
+        .poke-panel {
+            background: linear-gradient(180deg, #3d5a80 0%, #293241 100%);
+            border: 4px solid #ffd700;
+            border-radius: 16px;
+            box-shadow: 
+                0 0 0 2px #1a1a2e,
+                0 8px 32px rgba(0,0,0,0.8),
+                inset 0 2px 0 rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .poke-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, rgba(255,215,0,0.5), transparent);
+        }
+        
+        /* Resource bar style */
+        .resource-panel {
+            background: linear-gradient(180deg, #1e3a5f 0%, #0f1f3a 100%);
+            border: 3px solid #60a5fa;
+            border-radius: 12px;
+            padding: 12px 20px;
+            box-shadow: 
+                0 0 20px rgba(96,165,250,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        
+        /* Pokeball button */
+        .poke-btn {
+            background: linear-gradient(180deg, #ef4444 0%, #b91c1c 50%, #1f1f1f 50%, #0a0a0a 100%);
+            border: 3px solid #ffd700;
+            border-radius: 50px;
+            padding: 10px 24px;
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        .poke-btn::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            border: 3px solid #333;
+            opacity: 0.8;
+        }
+        .poke-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239,68,68,0.5);
+        }
+        .poke-btn span { position: relative; z-index: 1; }
+        
+        /* Standard buttons */
+        .btn-pokemon {
+            background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+            border: 2px solid #60a5fa;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+        .btn-pokemon:hover { 
+            background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+            transform: translateY(-1px);
+        }
+        .btn-danger {
+            background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
+            border: 2px solid #fca5a5;
+        }
+        .btn-success {
+            background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
+            border: 2px solid #86efac;
+        }
+        
+        /* Info panels */
+        #ui-overlay {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            pointer-events: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 10;
+        }
+        .info-panel {
+            background: linear-gradient(135deg, rgba(30,58,95,0.95) 0%, rgba(15,23,42,0.95) 100%);
+            border: 2px solid #ffd700;
+            border-radius: 12px;
+            padding: 14px 18px;
+            pointer-events: auto;
+            box-shadow: 
+                0 0 30px rgba(255,215,0,0.15),
+                0 10px 40px rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+        }
+        .info-panel h3 {
+            font-family: 'Cinzel', serif;
+            color: #ffd700;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            text-shadow: 0 0 10px rgba(255,215,0,0.5);
+        }
+        
+        /* Resource icons */
+        .res-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: inset 0 -2px 0 rgba(0,0,0,0.3);
+        }
+        .res-food { background: linear-gradient(180deg, #4ade80 0%, #16a34a 100%); }
+        .res-prod { background: linear-gradient(180deg, #fb923c 0%, #c2410c 100%); }
+        .res-gold { background: linear-gradient(180deg, #fbbf24 0%, #b45309 100%); }
+        
+        /* Combat log */
+        .combat-log {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 320px;
+            max-height: 200px;
+            background: linear-gradient(180deg, rgba(15,23,42,0.95) 0%, rgba(10,15,25,0.95) 100%);
+            border: 2px solid #475569;
+            border-radius: 10px;
+            padding: 12px;
+            overflow-y: auto;
+            font-size: 11px;
+            pointer-events: auto;
+            z-index: 10;
+        }
+        .combat-log::-webkit-scrollbar { width: 6px; }
+        .combat-log::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        .log-entry { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        
+        /* Battle arena */
+        #battle-arena {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at center, #1e293b 0%, #0f172a 50%, #020617 100%);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        #battle-arena.active { display: flex; }
+        
+        .battle-field {
+            width: 95%;
+            max-width: 1400px;
+            height: 85%;
+            background: 
+                radial-gradient(ellipse at 50% 100%, rgba(34,197,94,0.3) 0%, transparent 50%),
+                linear-gradient(180deg, #1e3a5f 0%, #0c1929 60%, #1a3320 100%);
+            border: 4px solid #ffd700;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 0 60px rgba(255,215,0,0.3),
+                inset 0 0 100px rgba(0,0,0,0.5);
+        }
+        .battle-field::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 50'%3E%3Cellipse cx='50' cy='25' rx='45' ry='20' fill='none' stroke='%23ffffff20' stroke-width='2'/%3E%3C/svg%3E") center bottom no-repeat;
+            background-size: 80% auto;
+            opacity: 0.3;
+        }
+        
+        /* Stadium lights */
+        .battle-field::after {
+            content: '';
+            position: absolute;
+            top: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 100px;
+            background: radial-gradient(ellipse, rgba(255,255,255,0.2) 0%, transparent 70%);
+        }
+        
+        .battle-ui {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+        }
+        .battle-stats {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .army-stats {
+            padding: 12px 24px;
+            border-radius: 12px;
+            min-width: 220px;
+            border: 3px solid;
+        }
+        .army-stats.player { 
+            background: linear-gradient(135deg, rgba(59,130,246,0.4) 0%, rgba(30,64,175,0.4) 100%);
+            border-color: #3b82f6;
+            box-shadow: 0 0 30px rgba(59,130,246,0.3);
+        }
+        .army-stats.enemy { 
+            background: linear-gradient(135deg, rgba(239,68,68,0.4) 0%, rgba(153,27,27,0.4) 100%);
+            border-color: #ef4444;
+            box-shadow: 0 0 30px rgba(239,68,68,0.3);
+        }
+        
+        /* Settlement modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: linear-gradient(180deg, #1e3a5f 0%, #0f172a 100%);
+            border: 4px solid #ffd700;
+            border-radius: 20px;
+            padding: 24px;
+            min-width: 400px;
+            max-width: 500px;
+            box-shadow: 0 0 60px rgba(255,215,0,0.3);
+        }
+        .modal-content h2 {
+            font-family: 'Cinzel', serif;
+            color: #ffd700;
+            text-align: center;
+            margin-bottom: 16px;
+            text-shadow: 0 0 20px rgba(255,215,0,0.5);
+        }
+        
+        /* Type badges */
+        .type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-right: 4px;
+        }
+        
+        /* Animations */
+        @keyframes pulse-gold {
+            0%, 100% { box-shadow: 0 0 20px rgba(255,215,0,0.3); }
+            50% { box-shadow: 0 0 40px rgba(255,215,0,0.6); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        .animate-pulse-gold { animation: pulse-gold 2s infinite; }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+    </style>
+</head>
+<body>
+    <main id="main-canvas"></main>
+    
+    <!-- Top UI Overlay -->
+    <div id="ui-overlay">
+        <!-- Resources Panel -->
+        <div class="resource-panel flex items-center gap-6">
+            <div class="flex items-center gap-2">
+                <div class="res-icon res-food">🌾</div>
+                <div>
+                    <div class="text-xs text-slate-400">Food</div>
+                    <div class="text-lg font-bold text-green-400" id="food-count">50</div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="res-icon res-prod">⚒️</div>
+                <div>
+                    <div class="text-xs text-slate-400">Production</div>
+                    <div class="text-lg font-bold text-orange-400" id="prod-count">30</div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="res-icon res-gold">💰</div>
+                <div>
+                    <div class="text-xs text-slate-400">Gold</div>
+                    <div class="text-lg font-bold text-yellow-400" id="gold-count">100</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Turn & Controls -->
+        <div class="flex items-center gap-4">
+            <div class="info-panel">
+                <div class="text-center">
+                    <div class="text-xs text-slate-400 uppercase tracking-wider">Turn</div>
+                    <div class="text-2xl font-bold text-white" id="turn-counter">1</div>
+                </div>
+            </div>
+            <button class="poke-btn" onclick="endTurn()">
+                <span>End Turn</span>
+            </button>
+        </div>
+        
+        <!-- Selection Info -->
+        <div class="info-panel" id="selection-panel" style="display:none;">
+            <h3>⚔️ Selection</h3>
+            <div id="selection-info" class="text-sm"></div>
+        </div>
+    </div>
+    
+    <!-- Bottom Hex Info -->
+    <div class="info-panel" id="hex-panel" style="position:absolute;bottom:20px;left:20px;display:none;z-index:10;">
+        <h3>🗺️ Territory</h3>
+        <div id="hex-info" class="text-sm"></div>
+    </div>
+    
+    <!-- Combat Log -->
+    <div class="combat-log" id="combat-log">
+        <div class="text-xs text-slate-400 uppercase tracking-wider mb-2">Battle Log</div>
+        <div id="log-entries"></div>
+    </div>
+    
+    <!-- Settlement Modal -->
+    <div class="modal-overlay" id="settlement-modal">
+        <div class="modal-content">
+            <h2 id="settlement-name">Settlement</h2>
+            <div id="settlement-details"></div>
+            <div class="flex justify-end gap-2 mt-4">
+                <button class="btn-pokemon" onclick="closeSettlementModal()">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Battle Arena -->
+    <div id="battle-arena">
+        <div class="battle-field">
+            <canvas id="battle-canvas"></canvas>
+            <div class="battle-stats">
+                <div class="army-stats player">
+                    <div class="text-xs text-blue-300 uppercase tracking-wider">Your Forces</div>
+                    <div class="text-2xl font-bold text-white"><span id="player-units-count">0</span> Units</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-4xl font-bold text-yellow-400 animate-float" style="font-family:'Cinzel',serif;text-shadow:0 0 30px rgba(255,215,0,0.8);">⚔️ BATTLE ⚔️</div>
+                </div>
+                <div class="army-stats enemy">
+                    <div class="text-xs text-red-300 uppercase tracking-wider">Enemy Forces</div>
+                    <div class="text-2xl font-bold text-white"><span id="enemy-units-count">0</span> Units</div>
+                </div>
+            </div>
+            <div class="battle-ui">
+                <button class="btn-pokemon" onclick="toggleBattlePause()">⏸️ Pause</button>
+                <button class="btn-pokemon" onclick="setBattleSpeed(1)">1×</button>
+                <button class="btn-pokemon" onclick="setBattleSpeed(2)">2×</button>
+                <button class="btn-pokemon" onclick="setBattleSpeed(4)">4×</button>
+                <button class="btn-danger" onclick="retreatBattle()">🏃 Retreat</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+// === CONFIG ===
+const HEX_SIZE = 32;
+const MAP_RADIUS = 14;
+
+// === GLOBAL STATE ===
+let grid = new Map();
+let armies = [];
+let settlements = [];
+let wildPokemon = [];
+let selectedArmy = null;
+let selectedSettlement = null;
+let hoveredHex = null;
+let turn = 1;
+let camera = { x: 0, y: 0 };
+let combatLog = [];
+let spriteCache = new Map();
+let particles = [];
+
+let factionResources = {
+    player: { food: 50, production: 30, gold: 100 },
+    enemy: { food: 50, production: 30, gold: 100 }
+};
+
+// Battle state
+let battleMode = false;
+let battleCanvas, battleCtx;
+let battleUnits = [];
+let battleProjectiles = [];
+let battleParticles = [];
+let battlePaused = false;
+let battleSpeed = 1;
+let battleFrame = 0;
+let battleAttacker = null;
+let battleDefender = null;
+
+// === POKEMON DATABASE ===
+const POKEMON_DATA = {
+    252: { name: 'Treecko', types: ['grass'], hp: 40, attack: 45, defense: 35, speed: 1.8, range: 80, role: 'damage', abilities: ['quick_attack'], spriteId: '0252' },
+    253: { name: 'Grovyle', types: ['grass'], hp: 50, attack: 65, defense: 45, speed: 2.0, range: 90, role: 'damage', abilities: ['quick_attack'], spriteId: '0253' },
+    254: { name: 'Sceptile', types: ['grass'], hp: 70, attack: 85, defense: 65, speed: 2.2, range: 100, role: 'damage', abilities: ['quick_attack'], spriteId: '0254' },
+    255: { name: 'Torchic', types: ['fire'], hp: 45, attack: 60, defense: 40, speed: 1.7, range: 70, role: 'damage', abilities: ['quick_attack'], spriteId: '0255' },
+    256: { name: 'Combusken', types: ['fire', 'fighting'], hp: 60, attack: 85, defense: 58, speed: 1.9, range: 75, role: 'damage', abilities: ['quick_attack'], spriteId: '0256' },
+    257: { name: 'Blaziken', types: ['fire', 'fighting'], hp: 80, attack: 120, defense: 70, speed: 2.1, range: 80, role: 'damage', abilities: ['quick_attack'], spriteId: '0257' },
+    258: { name: 'Mudkip', types: ['water'], hp: 50, attack: 70, defense: 50, speed: 1.5, range: 70, role: 'tank', abilities: ['protect'], spriteId: '0258' },
+    259: { name: 'Marshtomp', types: ['water', 'ground'], hp: 70, attack: 85, defense: 70, speed: 1.6, range: 75, role: 'tank', abilities: ['earthquake'], spriteId: '0259' },
+    260: { name: 'Swampert', types: ['water', 'ground'], hp: 100, attack: 110, defense: 90, speed: 1.4, range: 70, role: 'tank', abilities: ['earthquake', 'protect'], spriteId: '0260' },
+    25: { name: 'Pikachu', types: ['electric'], hp: 35, attack: 55, defense: 40, speed: 2.3, range: 120, role: 'control', abilities: ['freeze'], spriteId: '0025' },
+    26: { name: 'Raichu', types: ['electric'], hp: 60, attack: 90, defense: 55, speed: 2.5, range: 130, role: 'control', abilities: ['freeze'], spriteId: '0026' },
+    309: { name: 'Electrike', types: ['electric'], hp: 40, attack: 45, defense: 40, speed: 2.1, range: 110, role: 'control', abilities: ['freeze'], spriteId: '0309' },
+    310: { name: 'Manectric', types: ['electric'], hp: 70, attack: 75, defense: 60, speed: 2.3, range: 120, role: 'control', abilities: ['freeze'], spriteId: '0310' },
+    280: { name: 'Ralts', types: ['psychic'], hp: 28, attack: 25, defense: 25, speed: 1.5, range: 100, role: 'support', abilities: ['heal_pulse'], spriteId: '0280' },
+    281: { name: 'Kirlia', types: ['psychic'], hp: 38, attack: 35, defense: 35, speed: 1.7, range: 110, role: 'support', abilities: ['heal_pulse'], spriteId: '0281' },
+    282: { name: 'Gardevoir', types: ['psychic'], hp: 68, attack: 65, defense: 65, speed: 2.0, range: 120, role: 'support', abilities: ['heal_pulse', 'revive'], spriteId: '0282' },
+    307: { name: 'Meditite', types: ['fighting', 'psychic'], hp: 30, attack: 40, defense: 55, speed: 1.6, range: 70, role: 'damage', abilities: ['quick_attack'], spriteId: '0307' },
+    308: { name: 'Medicham', types: ['fighting', 'psychic'], hp: 60, attack: 60, defense: 75, speed: 1.8, range: 80, role: 'damage', abilities: ['quick_attack'], spriteId: '0308' },
+    371: { name: 'Bagon', types: ['dragon'], hp: 45, attack: 75, defense: 60, speed: 1.6, range: 70, role: 'damage', abilities: ['quick_attack'], spriteId: '0371' },
+    372: { name: 'Shelgon', types: ['dragon'], hp: 65, attack: 95, defense: 100, speed: 1.4, range: 70, role: 'tank', abilities: ['protect'], spriteId: '0372' },
+    373: { name: 'Salamence', types: ['dragon', 'flying'], hp: 95, attack: 135, defense: 80, speed: 2.2, range: 90, role: 'damage', abilities: ['quick_attack', 'earthquake'], spriteId: '0373' },
+    304: { name: 'Aron', types: ['steel', 'rock'], hp: 50, attack: 70, defense: 100, speed: 1.2, range: 60, role: 'tank', abilities: ['protect'], spriteId: '0304' },
+    305: { name: 'Lairon', types: ['steel', 'rock'], hp: 60, attack: 90, defense: 140, speed: 1.3, range: 65, role: 'tank', abilities: ['protect'], spriteId: '0305' },
+    306: { name: 'Aggron', types: ['steel', 'rock'], hp: 70, attack: 110, defense: 180, speed: 1.4, range: 70, role: 'tank', abilities: ['protect', 'earthquake'], spriteId: '0306' },
+    263: { name: 'Zigzagoon', types: ['normal'], hp: 38, attack: 30, defense: 41, speed: 1.8, range: 70, role: 'support', abilities: ['heal_pulse'], spriteId: '0263' },
+    264: { name: 'Linoone', types: ['normal'], hp: 78, attack: 70, defense: 61, speed: 2.0, range: 80, role: 'support', abilities: ['heal_pulse'], spriteId: '0264' },
+    285: { name: 'Shroomish', types: ['grass'], hp: 60, attack: 40, defense: 60, speed: 1.3, range: 70, role: 'tank', abilities: ['protect'], spriteId: '0285' },
+    286: { name: 'Breloom', types: ['grass', 'fighting'], hp: 60, attack: 130, defense: 80, speed: 1.8, range: 75, role: 'damage', abilities: ['quick_attack'], spriteId: '0286' }
+};
+
+const TYPE_EFFECTIVENESS = {
+    fire: { grass: 2, water: 0.5, fire: 0.5, ice: 2, bug: 2, steel: 2, rock: 0.5, dragon: 0.5 },
+    water: { fire: 2, water: 0.5, grass: 0.5, ground: 2, rock: 2, dragon: 0.5 },
+    grass: { water: 2, fire: 0.5, grass: 0.5, poison: 0.5, ground: 2, rock: 2, flying: 0.5, bug: 0.5, dragon: 0.5, steel: 0.5 },
+    electric: { water: 2, electric: 0.5, grass: 0.5, ground: 0, flying: 2, dragon: 0.5 },
+    psychic: { fighting: 2, poison: 2, psychic: 0.5, dark: 0, steel: 0.5 },
+    fighting: { normal: 2, ice: 2, rock: 2, dark: 2, steel: 2, psychic: 0.5, flying: 0.5, poison: 0.5, bug: 0.5, fairy: 0.5 },
+    dragon: { dragon: 2, steel: 0.5, fairy: 0 },
+    ground: { fire: 2, electric: 2, poison: 2, rock: 2, steel: 2, grass: 0.5, bug: 0.5, flying: 0 },
+    flying: { grass: 2, fighting: 2, bug: 2, electric: 0.5, rock: 0.5, steel: 0.5 },
+    steel: { ice: 2, rock: 2, fairy: 2, fire: 0.5, water: 0.5, electric: 0.5, steel: 0.5 },
+    rock: { fire: 2, ice: 2, flying: 2, bug: 2, fighting: 0.5, ground: 0.5, steel: 0.5 },
+    normal: { rock: 0.5, steel: 0.5, ghost: 0 }
+};
+
+const TYPE_COLORS = {
+    fire: '#F08030', water: '#6890F0', grass: '#78C850', electric: '#F8D030',
+    psychic: '#F85888', fighting: '#C03028', dragon: '#7038F8', ground: '#E0C068',
+    flying: '#A890F0', steel: '#B8B8D0', rock: '#B8A038', normal: '#A8A878',
+    ice: '#98D8D8', dark: '#705848', fairy: '#EE99AC', poison: '#A040A0',
+    ghost: '#705898', bug: '#A8B820'
+};
+
+const POKEMON_ABILITIES = {
+    'quick_attack': {
+        name: 'Quick Attack',
+        type: 'damage',
+        cooldown: 40,
+        effect: (caster, target) => {
+            applyDamage(caster, target, caster.attack * 1.5);
+        }
+    },
+    'earthquake': {
+        name: 'Earthquake',
+        type: 'aoe',
+        cooldown: 120,
+        effect: (caster, targets) => {
+            targets.forEach(t => {
+                const dist = Math.hypot(t.x - caster.x, t.y - caster.y);
+                if (dist < 150) {
+                    applyDamage(caster, t, caster.attack * 0.8);
+                    spawnBattleParticles(t.x, t.y, '#8b4513', 10);
+                }
+            });
+        }
+    },
+    'protect': {
+        name: 'Protect',
+        type: 'buff',
+        cooldown: 90,
+        effect: (caster) => {
+            caster.shielded = true;
+            caster.shieldDuration = 120;
+        }
+    },
+    'heal_pulse': {
+        name: 'Heal Pulse',
+        type: 'heal',
+        cooldown: 150,
+        effect: (caster, allies) => {
+            const injured = allies
+                .filter(a => a.hp < a.maxHp * 0.5)
+                .sort((a, b) => a.hp - b.hp)[0];
+            if (injured) {
+                const healAmount = caster.attack * 2;
+                injured.hp = Math.min(injured.maxHp, injured.hp + healAmount);
+                addLog(`${caster.name} healed ${injured.name || injured.type}!`, '#22c55e');
+                spawnBattleParticles(injured.x, injured.y, '#22c55e', 15);
+            }
+        }
+    },
+    'freeze': {
+        name: 'Ice Beam',
+        type: 'control',
+        cooldown: 80,
+        effect: (caster, target) => {
+            applyDamage(caster, target, caster.attack * 1.2);
+            if (Math.random() < 0.3) {
+                target.stunned = true;
+                target.stunDuration = 60;
+            }
+        }
+    },
+    'revive': {
+        name: 'Revival',
+        type: 'resurrection',
+        cooldown: 240,
+        effect: (caster, deadAllies) => {
+            if (deadAllies.length > 0) {
+                const target = deadAllies[0];
+                target.hp = Math.floor(target.maxHp * 0.3);
+                target.isRevived = true;
+                addLog(`${caster.name} revived ${target.name || target.type}!`, '#ffd700');
+            }
+        }
+    }
+};
+
+const MEDIEVAL_UNIT_TYPES = {
+    'Infantry': { hp: 80, attack: 10, defense: 15, speed: 1.2, range: 40, color: '#8b7355', cost: { prod: 10, gold: 5 } },
+    'Spearman': { hp: 70, attack: 12, defense: 10, speed: 1.3, range: 60, color: '#6b5d4f', cost: { prod: 12, gold: 6 } },
+    'Cavalry': { hp: 100, attack: 18, defense: 8, speed: 2.5, range: 40, color: '#6366f1', cost: { prod: 20, gold: 15 } },
+    'Archer': { hp: 50, attack: 10, defense: 5, speed: 1.8, range: 200, color: '#22c55e', cost: { prod: 15, gold: 8 } },
+    'Crossbowman': { hp: 60, attack: 14, defense: 8, speed: 1.5, range: 180, color: '#16a34a', cost: { prod: 18, gold: 10 } },
+    'Mage': { hp: 45, attack: 16, defense: 5, speed: 1.6, range: 150, color: '#a855f7', cost: { prod: 25, gold: 20 } },
+    'Settler': { hp: 30, attack: 0, defense: 5, speed: 1.2, range: 0, color: '#eab308', cost: { prod: 40, gold: 30 } }
+};
+
+// Keep backward compatibility reference
+const TRAINER_TYPES = MEDIEVAL_UNIT_TYPES;
+
+const STARTER_POKEMON = [252, 255, 258, 280, 304, 285, 263, 309, 371, 307];
+const EVOLVED_POKEMON = [254, 257, 260, 282, 306, 286, 264, 310, 373, 308];
+
+// Visual theme
+const THEME = {
+    fog: '#0a0c12',
+    unexplored: '#12151f',
+    grass: { base: '#2d5a3a', light: '#3d7a4d', dark: '#1d4028' },
+    forest: { base: '#1a4025', light: '#2a5a35', dark: '#0f2a18' },
+    mountain: { base: '#5a6070', light: '#7a8090', dark: '#3a4050' },
+    water: { base: '#1a4a70', light: '#2a6090', dark: '#0f3050' },
+    plains: { base: '#6a8040', light: '#8aa050', dark: '#4a6030' },
+    player: '#3b82f6',
+    enemy: '#ef4444',
+    gold: '#ffd700'
+};
+
+const SETTLEMENT_NAMES = [
+    'Pallet Town', 'Viridian City', 'Pewter Keep', 'Cerulean Fort',
+    'Vermillion Hold', 'Lavender Watch', 'Celadon Castle', 'Saffron Citadel',
+    'Fuchsia Fortress', 'Cinnabar Bastion', 'Indigo Stronghold', 'Victory Hold'
+];
+
+// === CLASSES ===
+class Hex {
+    constructor(q, r) {
+        this.q = q;
+        this.r = r;
+        this.distFromCenter = (Math.abs(q) + Math.abs(q + r) + Math.abs(r)) / 2;
+        this.type = this.generateType();
+        this.explored = false;
+        this.visible = false;
+        this.owner = 'none';
+        this.resources = this.generateResources();
+        this.decoration = Math.random();
+    }
+
+    generateType() {
+        if (this.distFromCenter > MAP_RADIUS) return 'water';
+        const noise = Math.random();
+        if (noise > 0.92) return 'mountain';
+        if (noise > 0.75) return 'forest';
+        if (noise > 0.4) return 'plains';
+        return 'grass';
+    }
+
+    generateResources() {
+        const res = { food: 0, production: 0, gold: 0 };
+        switch(this.type) {
+            case 'grass': res.food = 3; res.production = 1; break;
+            case 'plains': res.food = 2; res.gold = 1; break;
+            case 'forest': res.food = 1; res.production = 3; break;
+            case 'mountain': res.production = 2; res.gold = 2; break;
+        }
+        return res;
+    }
+
+    getScreenCoords() {
+        return {
+            x: HEX_SIZE * (3/2 * this.q),
+            y: HEX_SIZE * (Math.sqrt(3)/2 * this.q + Math.sqrt(3) * this.r)
+        };
+    }
+}
+
+// Helper for unique ID generation
+function generateUnitId() {
+    return Date.now() + Math.random();
+}
+
+class MedievalUnit {
+    constructor(unitType, owner) {
+        this.id = generateUnitId();
+        this.type = unitType;
+        this.owner = owner;
+        this.unitClass = 'medieval';
+
+        const stats = MEDIEVAL_UNIT_TYPES[unitType];
+        this.hp = stats.hp;
+        this.maxHp = stats.hp;
+        this.attack = stats.attack;
+        this.defense = stats.defense;
+        this.speed = stats.speed;
+        this.range = stats.range;
+        this.color = stats.color;
+    }
+
+    getStrength() { return Math.floor(this.hp * 0.3 + this.attack * 0.7); }
+    isAlive() { return this.hp > 0; }
+}
+
+class PokemonUnit {
+    constructor(pokemonId, owner) {
+        this.id = generateUnitId();
+        this.pokemonId = pokemonId;
+        this.owner = owner;
+        this.unitClass = 'pokemon';
+
+        const data = POKEMON_DATA[pokemonId];
+        this.name = data.name;
+        this.types = data.types;
+        this.hp = data.hp;
+        this.maxHp = data.hp;
+        this.attack = data.attack;
+        this.defense = data.defense || 10;
+        this.speed = data.speed;
+        this.range = data.range || 100;
+        this.role = data.role;
+        this.abilities = data.abilities;
+        this.abilityCooldowns = {};
+
+        this.isDead = false;
+        this.inHealingQueue = false;
+        this.healingTurnsLeft = 0;
+
+        loadSprite(pokemonId);
+    }
+
+    getStrength() { return Math.floor(this.hp * 0.4 + this.attack * 0.6); }
+    isAlive() { return this.hp > 0 && !this.isDead; }
+}
+
+// Legacy Unit class for backward compatibility during migration
+class Unit {
+    constructor(trainerType, pokemonId, owner = 'player') {
+        this.id = Date.now() + Math.random();
+        this.trainerType = trainerType;
+        this.pokemonId = pokemonId;
+        this.owner = owner;
+
+        const pokemon = POKEMON_DATA[pokemonId];
+        const trainer = TRAINER_TYPES[trainerType];
+
+        this.trainerHp = trainer.hp;
+        this.trainerMaxHp = trainer.hp;
+        this.trainerAttack = trainer.attack;
+
+        this.pokemonHp = pokemon.hp;
+        this.pokemonMaxHp = pokemon.hp;
+        this.pokemonAttack = pokemon.attack;
+        this.types = pokemon.types;
+
+        this.speed = trainer.speed;
+        this.range = trainer.range;
+
+        loadSprite(pokemonId);
+    }
+
+    getTotalHp() { return this.trainerHp + this.pokemonHp; }
+    getTotalMaxHp() { return this.trainerMaxHp + this.pokemonMaxHp; }
+    getTotalAttack() { return this.trainerAttack + this.pokemonAttack; }
+    getStrength() { return Math.floor(this.getTotalHp() * 0.3 + this.getTotalAttack() * 0.7); }
+}
+
+class Army {
+    constructor(q, r, owner = 'player') {
+        this.q = q;
+        this.r = r;
+        this.owner = owner;
+        this.medievalUnits = [];
+        this.pokemon = [];
+        this.maxPokemonSlots = 3;
+        this.movesLeft = 2;
+        // Legacy compatibility
+        this.units = [];
+    }
+
+    addMedievalUnit(unit) { this.medievalUnits.push(unit); }
+
+    addPokemon(pokemon) {
+        if (this.pokemon.length < this.maxPokemonSlots) {
+            this.pokemon.push(pokemon);
+            return true;
+        }
+        return false;
+    }
+
+    removePokemon(pokemon) {
+        this.pokemon = this.pokemon.filter(p => p !== pokemon);
+    }
+
+    // Legacy compatibility
+    addUnit(unit) { this.units.push(unit); }
+
+    getAllUnits() { return [...this.medievalUnits, ...this.pokemon, ...this.units]; }
+    getUnitCount() { return this.medievalUnits.length + this.pokemon.length + this.units.length; }
+    getTotalStrength() { return this.getAllUnits().reduce((s, u) => s + u.getStrength(), 0); }
+    resetMoves() { this.movesLeft = 2; }
+}
+
+class Settlement {
+    constructor(q, r, owner, name) {
+        this.q = q;
+        this.r = r;
+        this.owner = owner;
+        this.name = name;
+        this.productionQueue = [];
+        this.territoryRadius = 2;
+        this.buildings = {
+            pokemonCenter: false
+        };
+        this.healingQueue = [];
+    }
+
+    buildPokemonCenter() {
+        if (!this.buildings.pokemonCenter) {
+            this.buildings.pokemonCenter = true;
+            return true;
+        }
+        return false;
+    }
+
+    addToHealingQueue(pokemon, baseTurns = 5) {
+        this.healingQueue.push({
+            pokemon: pokemon,
+            turnsLeft: baseTurns
+        });
+        pokemon.inHealingQueue = true;
+    }
+
+    processHealing() {
+        this.healingQueue = this.healingQueue.filter(entry => {
+            entry.turnsLeft--;
+            if (entry.turnsLeft <= 0) {
+                entry.pokemon.hp = entry.pokemon.maxHp;
+                entry.pokemon.isDead = false;
+                entry.pokemon.inHealingQueue = false;
+                addLog(`${entry.pokemon.name} fully healed at ${this.name}!`, '#22c55e');
+                return false;
+            }
+            return true;
+        });
+    }
+
+    getResourceOutput() {
+        let output = { food: 2, production: 2, gold: 1 };
+        for (let dq = -this.territoryRadius; dq <= this.territoryRadius; dq++) {
+            for (let dr = -this.territoryRadius; dr <= this.territoryRadius; dr++) {
+                if (Math.abs(dq + dr) <= this.territoryRadius) {
+                    const hex = grid.get(`${this.q + dq},${this.r + dr}`);
+                    if (hex && hex.owner === this.owner) {
+                        output.food += hex.resources.food;
+                        output.production += hex.resources.production;
+                        output.gold += hex.resources.gold;
+                    }
+                }
+            }
+        }
+        return output;
+    }
+}
+
+class WildPokemon {
+    constructor(q, r, pokemonId) {
+        this.q = q;
+        this.r = r;
+        this.pokemonId = pokemonId;
+        this.discovered = false;
+        this.captured = false;
+    }
+}
+
+// === SPRITE LOADING ===
+function loadSprite(pokemonId) {
+    if (spriteCache.has(pokemonId)) return;
+    const spriteId = POKEMON_DATA[pokemonId]?.spriteId;
+    if (!spriteId) return;
+    const img = loadImage(
+        `https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/portrait/${spriteId}/Normal.png`,
+        () => spriteCache.set(pokemonId, img),
+        () => console.log(`Failed: ${pokemonId}`)
+    );
+}
+
+// === P5.JS SETUP ===
+function setup() {
+    const canvas = createCanvas(windowWidth, windowHeight);
+    canvas.parent('main-canvas');
+
+    battleCanvas = document.getElementById('battle-canvas');
+    battleCtx = battleCanvas.getContext('2d');
+
+    generateMap();
+    setupStartingPositions();
+    generateWildPokemon();
+    updateVisibility();
+    updateUI();
+
+    addLog('Welcome to Medieval Pokemon Conquest!', '#ffd700');
+    addLog('Conquer the realm with your Pokemon army.', '#60a5fa');
+}
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
+}
+
+function generateMap() {
+    for (let q = -MAP_RADIUS - 2; q <= MAP_RADIUS + 2; q++) {
+        for (let r = -MAP_RADIUS - 2; r <= MAP_RADIUS + 2; r++) {
+            const hex = new Hex(q, r);
+            grid.set(`${q},${r}`, hex);
+        }
+    }
+}
+
+function generateWildPokemon() {
+    const count = 8 + Math.floor(Math.random() * 5);
+
+    for (let i = 0; i < count; i++) {
+        let hex;
+        let attempts = 0;
+        do {
+            const q = Math.floor(Math.random() * MAP_RADIUS * 2) - MAP_RADIUS;
+            const r = Math.floor(Math.random() * MAP_RADIUS * 2) - MAP_RADIUS;
+            hex = grid.get(`${q},${r}`);
+            attempts++;
+        } while (attempts < 50 && (!hex || hex.type === 'water' ||
+                 settlements.some(s => axialDistance(s, hex) < 3)));
+
+        if (!hex || hex.type === 'water') continue;
+
+        let pokemonPool = STARTER_POKEMON;
+        if (hex.type === 'mountain' || hex.type === 'forest') {
+            pokemonPool = Math.random() > 0.5 ? EVOLVED_POKEMON : STARTER_POKEMON;
+        }
+
+        const pokemonId = pokemonPool[Math.floor(Math.random() * pokemonPool.length)];
+        wildPokemon.push(new WildPokemon(hex.q, hex.r, pokemonId));
+    }
+}
+
+function setupStartingPositions() {
+    // Player
+    const playerSettlement = new Settlement(0, 0, 'player', 'Pallet Keep');
+    settlements.push(playerSettlement);
+    claimTerritory(playerSettlement);
+
+    const playerArmy = new Army(1, 0, 'player');
+    // Medieval troops
+    playerArmy.addMedievalUnit(new MedievalUnit('Cavalry', 'player'));
+    playerArmy.addMedievalUnit(new MedievalUnit('Archer', 'player'));
+    playerArmy.addMedievalUnit(new MedievalUnit('Infantry', 'player'));
+    // Starting Pokemon
+    playerArmy.addPokemon(new PokemonUnit(257, 'player')); // Blaziken
+    armies.push(playerArmy);
+
+    // Enemy
+    const enemySettlement = new Settlement(10, -5, 'enemy', 'Crimson Citadel');
+    settlements.push(enemySettlement);
+    claimTerritory(enemySettlement);
+
+    const enemyArmy1 = new Army(9, -4, 'enemy');
+    enemyArmy1.addMedievalUnit(new MedievalUnit('Cavalry', 'enemy'));
+    enemyArmy1.addMedievalUnit(new MedievalUnit('Archer', 'enemy'));
+    enemyArmy1.addMedievalUnit(new MedievalUnit('Infantry', 'enemy'));
+    enemyArmy1.addPokemon(new PokemonUnit(260, 'enemy')); // Swampert
+    armies.push(enemyArmy1);
+
+    const enemyArmy2 = new Army(11, -6, 'enemy');
+    enemyArmy2.addMedievalUnit(new MedievalUnit('Spearman', 'enemy'));
+    enemyArmy2.addMedievalUnit(new MedievalUnit('Archer', 'enemy'));
+    enemyArmy2.addPokemon(new PokemonUnit(306, 'enemy')); // Aggron
+    armies.push(enemyArmy2);
+}
+
+function claimTerritory(settlement) {
+    for (let dq = -settlement.territoryRadius; dq <= settlement.territoryRadius; dq++) {
+        for (let dr = -settlement.territoryRadius; dr <= settlement.territoryRadius; dr++) {
+            if (Math.abs(dq + dr) <= settlement.territoryRadius) {
+                const hex = grid.get(`${settlement.q + dq},${settlement.r + dr}`);
+                if (hex && hex.type !== 'water') {
+                    hex.owner = settlement.owner;
+                }
+            }
+        }
+    }
+}
+
+// === DRAWING ===
+function draw() {
+    if (battleMode) {
+        if (!battlePaused) {
+            for (let i = 0; i < battleSpeed; i++) updateBattle();
+        }
+        drawBattle();
+        return;
+    }
+    
+    background(10, 12, 18);
+    
+    push();
+    translate(width / 2 + camera.x, height / 2 + camera.y);
+    
+    // Draw hexes
+    grid.forEach(hex => drawHex(hex));
+    
+    // Draw settlements
+    settlements.forEach(s => {
+        const hex = grid.get(`${s.q},${s.r}`);
+        if (!hex || !hex.visible) return;
+        const { x, y } = hex.getScreenCoords();
+        drawSettlement(x, y, s);
+    });
+    
+    // Draw armies
+    armies.forEach(a => {
+        const hex = grid.get(`${a.q},${a.r}`);
+        if (!hex || (!hex.visible && a.owner !== 'player')) return;
+        const { x, y } = getHexToScreen(a.q, a.r);
+        drawArmy(x, y, a);
+    });
+    
+    // Draw particles
+    updateAndDrawParticles();
+    
+    pop();
+    
+    // Draw movement path preview
+    if (selectedArmy && hoveredHex && selectedArmy.movesLeft > 0) {
+        drawMovementPreview();
+    }
+}
+
+function drawHex(hex) {
+    const { x, y } = hex.getScreenCoords();
+    
+    // Skip if too far from view
+    const screenX = x + width / 2 + camera.x;
+    const screenY = y + height / 2 + camera.y;
+    if (screenX < -HEX_SIZE * 2 || screenX > width + HEX_SIZE * 2) return;
+    if (screenY < -HEX_SIZE * 2 || screenY > height + HEX_SIZE * 2) return;
+    
+    if (!hex.explored) {
+        drawStyledHex(x, y, THEME.unexplored, THEME.unexplored);
+        return;
+    }
+    
+    if (!hex.visible) {
+        const baseColor = getTerrainColor(hex.type);
+        const fogColor = lerpColor(color(baseColor.base), color(THEME.fog), 0.6);
+        drawStyledHex(x, y, fogColor, fogColor);
+        return;
+    }
+    
+    const terrain = getTerrainColor(hex.type);
+    let baseCol = color(terrain.base);
+    
+    // Territory tinting
+    if (hex.owner === 'player') {
+        baseCol = lerpColor(baseCol, color(THEME.player), 0.25);
+    } else if (hex.owner === 'enemy') {
+        baseCol = lerpColor(baseCol, color(THEME.enemy), 0.25);
+    }
+    
+    drawStyledHex(x, y, baseCol, terrain);
+    
+    // Terrain decorations
+    drawTerrainDetails(x, y, hex);
+    
+    // Resource indicators
+    if (hex.visible) drawResourceIndicators(x, y, hex);
+    
+    // Hover highlight
+    if (hoveredHex && hoveredHex.q === hex.q && hoveredHex.r === hex.r) {
+        drawHexHighlight(x, y, color(255, 255, 255, 100));
+    }
+}
+
+function getTerrainColor(type) {
+    return THEME[type] || THEME.grass;
+}
+
+function drawStyledHex(x, y, fillCol, terrain) {
+    push();
+    translate(x, y);
+    
+    // Shadow
+    noStroke();
+    fill(0, 0, 0, 40);
+    drawHexShape(HEX_SIZE + 2, 2);
+    
+    // Main hex with gradient effect
+    if (typeof terrain === 'object' && terrain.light) {
+        // Gradient simulation
+        fill(terrain.dark);
+        drawHexShape(HEX_SIZE, 0);
+        fill(fillCol);
+        drawHexShape(HEX_SIZE - 2, 0);
+    } else {
+        fill(fillCol);
+        drawHexShape(HEX_SIZE, 0);
+    }
+    
+    // Border
+    noFill();
+    stroke(0, 0, 0, 60);
+    strokeWeight(1);
+    drawHexShape(HEX_SIZE, 0);
+    
+    pop();
+}
+
+function drawHexShape(size, offsetY) {
+    beginShape();
+    for (let i = 0; i < 6; i++) {
+        const angle = PI / 3 * i;
+        vertex(size * cos(angle), size * sin(angle) + offsetY);
+    }
+    endShape(CLOSE);
+}
+
+function drawHexHighlight(x, y, col) {
+    push();
+    translate(x, y);
+    noFill();
+    stroke(col);
+    strokeWeight(3);
+    drawHexShape(HEX_SIZE - 2, 0);
+    pop();
+}
+
+function drawTerrainDetails(x, y, hex) {
+    push();
+    translate(x, y);
+    noStroke();
+    
+    const seed = hex.q * 1000 + hex.r;
+    randomSeed(seed);
+    
+    if (hex.type === 'grass') {
+        // Grass tufts
+        fill(60, 140, 70, 150);
+        for (let i = 0; i < 3; i++) {
+            const gx = random(-12, 12);
+            const gy = random(-8, 8);
+            ellipse(gx, gy, 4, 6);
+        }
+    } else if (hex.type === 'forest') {
+        // Trees
+        for (let i = 0; i < 2; i++) {
+            const tx = random(-10, 10);
+            const ty = random(-6, 6);
+            fill(30, 60, 30);
+            ellipse(tx, ty - 6, 12, 14);
+            fill(70, 50, 30);
+            rect(tx - 2, ty, 4, 8);
+        }
+    } else if (hex.type === 'mountain') {
+        // Rocky peaks
+        fill(100, 110, 130);
+        triangle(-8, 8, 0, -8, 8, 8);
+        fill(80, 90, 110);
+        triangle(-4, 8, 2, -4, 8, 8);
+        // Snow cap
+        fill(240, 245, 255);
+        triangle(-2, -4, 0, -8, 2, -4);
+    } else if (hex.type === 'water') {
+        // Wave lines
+        stroke(100, 160, 220, 100);
+        strokeWeight(1);
+        noFill();
+        const waveOffset = frameCount * 0.02;
+        for (let i = -1; i <= 1; i++) {
+            beginShape();
+            for (let wx = -10; wx <= 10; wx += 5) {
+                const wy = i * 6 + sin(wx * 0.3 + waveOffset) * 2;
+                vertex(wx, wy);
+            }
+            endShape();
+        }
+    } else if (hex.type === 'plains') {
+        // Wheat/grass pattern
+        stroke(160, 140, 60, 100);
+        strokeWeight(1);
+        for (let i = 0; i < 4; i++) {
+            const px = random(-12, 12);
+            const py = random(-8, 8);
+            line(px, py, px + random(-2, 2), py - 5);
+        }
+    }
+    
+    randomSeed(frameCount);
+    pop();
+}
+
+function drawResourceIndicators(x, y, hex) {
+    if (hex.type === 'water') return;
+    
+    push();
+    translate(x, y + HEX_SIZE * 0.5);
+    textAlign(CENTER, CENTER);
+    textSize(7);
+    
+    let icons = '';
+    if (hex.resources.food > 1) icons += '🌾';
+    if (hex.resources.production > 1) icons += '⚒';
+    if (hex.resources.gold > 0) icons += '💰';
+    
+    if (icons) {
+        fill(0, 0, 0, 120);
+        noStroke();
+        rect(-12, -6, 24, 12, 3);
+        fill(255, 255, 255, 200);
+        text(icons, 0, 0);
+    }
+    pop();
+}
+
+function drawSettlement(x, y, s) {
+    push();
+    translate(x, y);
+    
+    const isPlayer = s.owner === 'player';
+    const mainCol = color(isPlayer ? THEME.player : THEME.enemy);
+    const goldCol = color(THEME.gold);
+    
+    // Glow effect
+    noStroke();
+    for (let i = 3; i > 0; i--) {
+        fill(red(mainCol), green(mainCol), blue(mainCol), 20 * i);
+        ellipse(0, 5, 50 + i * 10, 25 + i * 5);
+    }
+    
+    // Castle base platform
+    fill(60, 50, 40);
+    rect(-22, 5, 44, 10, 2);
+    
+    // Main castle body
+    fill(isPlayer ? '#2563eb' : '#dc2626');
+    stroke(40, 35, 30);
+    strokeWeight(2);
+    rect(-18, -8, 36, 18, 2);
+    
+    // Castle details
+    fill(isPlayer ? '#1d4ed8' : '#b91c1c');
+    rect(-14, -4, 8, 10);
+    rect(6, -4, 8, 10);
+    
+    // Center tower
+    fill(isPlayer ? '#3b82f6' : '#ef4444');
+    rect(-8, -22, 16, 18);
+    
+    // Battlements
+    fill(isPlayer ? '#1e40af' : '#991b1b');
+    for (let i = -16; i <= 16; i += 8) {
+        rect(i - 3, -12, 6, 4);
+    }
+    rect(-6, -26, 4, 4);
+    rect(2, -26, 4, 4);
+    
+    // Flag pole and flag
+    stroke(80, 70, 60);
+    strokeWeight(2);
+    line(0, -26, 0, -38);
+    
+    noStroke();
+    fill(goldCol);
+    beginShape();
+    vertex(0, -38);
+    vertex(12, -34);
+    vertex(0, -30);
+    endShape(CLOSE);
+    
+    // Windows with glow
+    fill(255, 220, 100, 200);
+    rect(-12, -2, 4, 5, 1);
+    rect(8, -2, 4, 5, 1);
+    rect(-2, -18, 4, 6, 1);
+    
+    // Name plate
+    fill(0, 0, 0, 180);
+    rect(-30, 18, 60, 14, 4);
+    stroke(goldCol);
+    strokeWeight(1);
+    noFill();
+    rect(-30, 18, 60, 14, 4);
+    
+    fill(255);
+    noStroke();
+    textSize(8);
+    textAlign(CENTER, CENTER);
+    textFont('Cinzel, serif');
+    text(s.name, 0, 24);
+    
+    pop();
+}
+
+function drawArmy(x, y, army) {
+    const isSelected = selectedArmy === army;
+    const isPlayer = army.owner === 'player';
+    const mainCol = color(isPlayer ? THEME.player : THEME.enemy);
+    const bob = sin(frameCount * 0.08) * 2;
+    
+    push();
+    translate(x, y + bob);
+    
+    // Selection effect
+    if (isSelected) {
+        // Outer glow ring
+        noFill();
+        stroke(255, 215, 0, 100 + sin(frameCount * 0.1) * 50);
+        strokeWeight(4);
+        circle(0, 0, HEX_SIZE * 1.8);
+        
+        // Inner pulse
+        stroke(255, 255, 255, 150);
+        strokeWeight(2);
+        circle(0, 0, HEX_SIZE * 1.5 + sin(frameCount * 0.15) * 5);
+    }
+    
+    // Shadow
+    noStroke();
+    fill(0, 0, 0, 60);
+    ellipse(0, 12, 30, 10);
+    
+    // Draw stacked units
+    const unitCount = army.getUnitCount();
+    for (let i = Math.min(unitCount - 1, 2); i >= 0; i--) {
+        const offsetY = -i * 5;
+        const offsetX = i * 3;
+        if (i < army.units.length) {
+            drawUnitMini(offsetX, offsetY, army.units[i], i === 0);
+        }
+    }
+    
+    // Unit count badge
+    if (unitCount > 1) {
+        // Badge background
+        fill(mainCol);
+        stroke(255);
+        strokeWeight(2);
+        circle(16, -16, 20);
+        
+        // Count
+        fill(255);
+        noStroke();
+        textSize(10);
+        textAlign(CENTER, CENTER);
+        textFont('Arial');
+        text(unitCount, 16, -16);
+    }
+    
+    // Movement indicators
+    if (army.owner === 'player' && army.movesLeft > 0) {
+        for (let i = 0; i < army.movesLeft; i++) {
+            fill(100, 255, 100);
+            stroke(255);
+            strokeWeight(1);
+            circle(-10 + i * 10, 20, 6);
+        }
+    }
+    
+    pop();
+}
+
+function drawUnitMini(ox, oy, unit, showSprite = true) {
+    push();
+    translate(ox, oy);
+    
+    const trainerCol = color(TRAINER_TYPES[unit.trainerType].color);
+    
+    // Trainer shape with glow
+    noStroke();
+    fill(red(trainerCol), green(trainerCol), blue(trainerCol), 50);
+    
+    if (unit.trainerType === 'Knight') {
+        // Shield glow
+        ellipse(0, 0, 24, 28);
+        // Shield body
+        fill(trainerCol);
+        stroke(255, 255, 255, 180);
+        strokeWeight(2);
+        beginShape();
+        vertex(0, -10);
+        vertex(9, -6);
+        vertex(9, 4);
+        vertex(0, 10);
+        vertex(-9, 4);
+        vertex(-9, -6);
+        endShape(CLOSE);
+        // Cross emblem
+        stroke(255, 215, 0);
+        strokeWeight(2);
+        line(-4, -2, 4, -2);
+        line(0, -6, 0, 4);
+    } else if (unit.trainerType === 'Archer') {
+        ellipse(0, 0, 22, 26);
+        fill(trainerCol);
+        stroke(255, 255, 255, 180);
+        strokeWeight(2);
+        triangle(-8, 8, 0, -10, 8, 8);
+        // Bow
+        noFill();
+        stroke(139, 90, 43);
+        strokeWeight(3);
+        arc(6, 0, 12, 16, -HALF_PI + 0.3, HALF_PI - 0.3);
+    } else if (unit.trainerType === 'Mage') {
+        ellipse(0, 0, 22, 22);
+        fill(trainerCol);
+        stroke(255, 255, 255, 180);
+        strokeWeight(2);
+        beginShape();
+        for (let i = 0; i < 6; i++) {
+            const a = TWO_PI / 6 * i - PI / 6;
+            vertex(8 * cos(a), 8 * sin(a));
+        }
+        endShape(CLOSE);
+        // Staff orb
+        fill(255, 200, 255, 200);
+        noStroke();
+        circle(6, -6, 6);
+    } else {
+        // Settler
+        ellipse(0, 0, 20, 20);
+        fill(trainerCol);
+        stroke(255, 255, 255, 180);
+        strokeWeight(2);
+        rect(-6, -6, 12, 12, 3);
+        // Face
+        fill(255, 220, 180);
+        noStroke();
+        circle(0, -2, 6);
+    }
+    
+    // Pokemon sprite
+    if (showSprite && unit.pokemonId) {
+        const sprite = spriteCache.get(unit.pokemonId);
+        if (sprite) {
+            // Sprite glow
+            const typeCol = TYPE_COLORS[unit.types[0]] || '#fff';
+            tint(255, 255, 255, 255);
+            imageMode(CENTER);
+            image(sprite, 12, -8, 20, 20);
+            noTint();
+        }
+    }
+    
+    pop();
+}
+
+function updateAndDrawParticles() {
+    particles = particles.filter(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= p.decay;
+        p.vy += 0.05;
+        
+        if (p.life > 0) {
+            push();
+            noStroke();
+            fill(red(p.col), green(p.col), blue(p.col), p.life * 255);
+            circle(p.x, p.y, p.size * (p.life / p.maxLife));
+            pop();
+            return true;
+        }
+        return false;
+    });
+}
+
+function spawnParticles(x, y, col, count = 10) {
+    for (let i = 0; i < count; i++) {
+        particles.push({
+            x, y,
+            vx: random(-2, 2),
+            vy: random(-3, 0),
+            size: random(3, 8),
+            col: col,
+            life: 1,
+            maxLife: 1,
+            decay: random(0.02, 0.05)
+        });
+    }
+}
+
+function drawMovementPreview() {
+    if (!hoveredHex || hoveredHex.type === 'water') return;
+    
+    const { x: hx, y: hy } = getHexToScreen(hoveredHex.q, hoveredHex.r);
+    const sx = hx + width / 2 + camera.x;
+    const sy = hy + height / 2 + camera.y;
+    
+    push();
+    noFill();
+    stroke(255, 215, 0, 150 + sin(frameCount * 0.1) * 50);
+    strokeWeight(3);
+    circle(sx, sy, HEX_SIZE * 1.5);
+    
+    // Arrow from army to target
+    const { x: ax, y: ay } = getHexToScreen(selectedArmy.q, selectedArmy.r);
+    const asx = ax + width / 2 + camera.x;
+    const asy = ay + height / 2 + camera.y;
+    
+    stroke(255, 215, 0, 100);
+    strokeWeight(2);
+    line(asx, asy, sx, sy);
+    
+    pop();
+}
+
+// === GAME LOGIC ===
+function axialDistance(a, b) {
+    return (Math.abs(a.q - b.q) + Math.abs(a.q + a.r - b.q - b.r) + Math.abs(a.r - b.r)) / 2;
+}
+
+function getHexToScreen(q, r) {
+    return {
+        x: HEX_SIZE * (3/2 * q),
+        y: HEX_SIZE * (Math.sqrt(3)/2 * q + Math.sqrt(3) * r)
+    };
+}
+
+function screenToHex(sx, sy) {
+    const px = sx - width / 2 - camera.x;
+    const py = sy - height / 2 - camera.y;
+    const q = (2/3 * px) / HEX_SIZE;
+    const r = (-1/3 * px + Math.sqrt(3)/3 * py) / HEX_SIZE;
+    return axialRound(q, r);
+}
+
+function axialRound(q, r) {
+    let rq = Math.round(q);
+    let rr = Math.round(r);
+    const rs = Math.round(-q - r);
+    
+    const qDiff = Math.abs(rq - q);
+    const rDiff = Math.abs(rr - r);
+    const sDiff = Math.abs(rs - (-q - r));
+    
+    if (qDiff > rDiff && qDiff > sDiff) rq = -rr - rs;
+    else if (rDiff > sDiff) rr = -rq - rs;
+    
+    return { q: rq, r: rr };
+}
+
+function getNeighbors(q, r) {
+    const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]];
+    return dirs.map(d => grid.get(`${q+d[0]},${r+d[1]}`)).filter(h => h);
+}
+
+function updateVisibility() {
+    grid.forEach(h => h.visible = false);
+    
+    armies.filter(a => a.owner === 'player').forEach(a => {
+        for (let dq = -4; dq <= 4; dq++) {
+            for (let dr = -4; dr <= 4; dr++) {
+                if (Math.abs(dq + dr) <= 4) {
+                    const hex = grid.get(`${a.q + dq},${a.r + dr}`);
+                    if (hex) {
+                        hex.visible = true;
+                        hex.explored = true;
+                    }
+                }
+            }
+        }
+    });
+    
+    settlements.filter(s => s.owner === 'player').forEach(s => {
+        for (let dq = -3; dq <= 3; dq++) {
+            for (let dr = -3; dr <= 3; dr++) {
+                if (Math.abs(dq + dr) <= 3) {
+                    const hex = grid.get(`${s.q + dq},${s.r + dr}`);
+                    if (hex) {
+                        hex.visible = true;
+                        hex.explored = true;
+                    }
+                }
+            }
+        }
+    });
+}
+
+// === INPUT HANDLING ===
+let isDragging = false;
+let dragStart = { x: 0, y: 0 };
+
+function attemptCapture(army, wildPoke) {
+    // Check if army has space
+    if (army.pokemon.length >= army.maxPokemonSlots) {
+        addLog('⚠️ Army has no Pokemon slots available!', '#ef4444');
+        return false;
+    }
+
+    // Capture probability based on army strength
+    const captureChance = Math.min(0.9, 0.4 + (army.getUnitCount() * 0.05));
+
+    if (Math.random() < captureChance) {
+        const pokemon = new PokemonUnit(wildPoke.pokemonId, army.owner);
+        army.addPokemon(pokemon);
+        wildPokemon = wildPokemon.filter(wp => wp !== wildPoke);
+        const { x, y } = getHexToScreen(wildPoke.q, wildPoke.r);
+        spawnParticles(x, y, color(255, 215, 0), 15);
+        addLog(`✨ Captured ${pokemon.name}!`, '#22c55e');
+        return true;
+    } else {
+        addLog(`❌ ${POKEMON_DATA[wildPoke.pokemonId].name} escaped!`, '#ef4444');
+        return false;
+    }
+}
+
+function mousePressed() {
+    if (battleMode) return;
+    
+    if (mouseButton === RIGHT) {
+        isDragging = true;
+        dragStart = { x: mouseX - camera.x, y: mouseY - camera.y };
+        return;
+    }
+    
+    const { q, r } = screenToHex(mouseX, mouseY);
+    const hex = grid.get(`${q},${r}`);
+    if (!hex || !hex.explored) return;
+    
+    // Check settlement click
+    const settlement = settlements.find(s => s.q === q && s.r === r);
+    if (settlement && settlement.owner === 'player') {
+        openSettlementModal(settlement);
+        return;
+    }
+
+    // Check wild Pokemon click
+    const wildPoke = wildPokemon.find(wp => wp.q === q && wp.r === r && !wp.captured);
+    if (wildPoke && selectedArmy && selectedArmy.owner === 'player') {
+        const dist = axialDistance(selectedArmy, wildPoke);
+        if (dist <= 1) {
+            attemptCapture(selectedArmy, wildPoke);
+            return;
+        }
+    }
+
+    // Check army click
+    const clickedArmy = armies.find(a => a.q === q && a.r === r);
+    
+    if (clickedArmy) {
+        if (clickedArmy.owner === 'player') {
+            if (selectedArmy && selectedArmy !== clickedArmy && selectedArmy.q !== q && selectedArmy.r !== r) {
+                // Merge armies
+                clickedArmy.units.push(...selectedArmy.units);
+                armies = armies.filter(a => a !== selectedArmy);
+                addLog(`Armies merged at (${q},${r})`, '#60a5fa');
+            }
+            selectedArmy = clickedArmy;
+            updateSelectionPanel();
+        } else if (selectedArmy && selectedArmy.movesLeft > 0) {
+            // Attack enemy
+            const dist = axialDistance(selectedArmy, clickedArmy);
+            if (dist <= 1) {
+                startBattle(selectedArmy, clickedArmy);
+            }
+        }
+        return;
+    }
+    
+    // Move selected army
+    if (selectedArmy && selectedArmy.owner === 'player' && selectedArmy.movesLeft > 0) {
+        if (hex.visible && hex.type !== 'water') {
+            const dist = axialDistance(selectedArmy, { q, r });
+            if (dist <= 1) {
+                // Check for adjacent enemies
+                const adjacentEnemy = armies.find(a => 
+                    a.owner === 'enemy' && axialDistance(a, { q, r }) <= 1
+                );
+                
+                selectedArmy.q = q;
+                selectedArmy.r = r;
+                selectedArmy.movesLeft--;
+                
+                const { x, y } = getHexToScreen(q, r);
+                spawnParticles(x, y, color(100, 200, 255), 8);
+                
+                updateVisibility();
+                
+                if (adjacentEnemy) {
+                    setTimeout(() => startBattle(selectedArmy, adjacentEnemy), 300);
+                }
+            }
+        }
+    }
+}
+
+function mouseReleased() {
+    isDragging = false;
+}
+
+function mouseDragged() {
+    if (isDragging) {
+        camera.x = mouseX - dragStart.x;
+        camera.y = mouseY - dragStart.y;
+    }
+}
+
+function mouseMoved() {
+    if (battleMode) return;
+    const { q, r } = screenToHex(mouseX, mouseY);
+    hoveredHex = grid.get(`${q},${r}`);
+    updateHexPanel();
+}
+
+function keyPressed() {
+    if (key === ' ' && !battleMode) {
+        endTurn();
+    }
+}
+
+// === TURN MANAGEMENT ===
+function endTurn() {
+    // Collect resources
+    settlements.forEach(s => {
+        if (s.owner === 'player' || s.owner === 'enemy') {
+            const output = s.getResourceOutput();
+            factionResources[s.owner].food += output.food;
+            factionResources[s.owner].production += output.production;
+            factionResources[s.owner].gold += output.gold;
+        }
+        
+        // Process production
+        if (s.productionQueue.length > 0) {
+            s.productionQueue[0].turnsLeft--;
+            if (s.productionQueue[0].turnsLeft <= 0) {
+                const item = s.productionQueue.shift();
+                spawnUnit(s, item.type, s.owner);
+                addLog(`${s.name} trained a ${item.type}!`, s.owner === 'player' ? '#60a5fa' : '#ef4444');
+            }
+        }
+    });
+    
+    // Upkeep
+    ['player', 'enemy'].forEach(faction => {
+        const unitCount = armies.filter(a => a.owner === faction)
+            .reduce((sum, a) => sum + a.getUnitCount(), 0);
+        factionResources[faction].food -= unitCount;
+        
+        if (factionResources[faction].food < 0) {
+            factionResources[faction].food = 0;
+            armies.filter(a => a.owner === faction).forEach(a => {
+                a.units.forEach(u => {
+                    u.trainerHp -= 10;
+                    u.pokemonHp -= 10;
+                });
+                a.units = a.units.filter(u => u.getTotalHp() > 0);
+            });
+            if (faction === 'player') addLog('⚠️ Starvation! Units take damage.', '#ef4444');
+        }
+    });
+    
+    // Reset movement
+    armies.forEach(a => a.resetMoves());
+    
+    // AI turn
+    runAI();
+    
+    turn++;
+    updateUI();
+    updateVisibility();
+    addLog(`Turn ${turn} begins.`, '#ffd700');
+}
+
+function runAI() {
+    const enemyArmies = armies.filter(a => a.owner === 'enemy');
+    const playerArmies = armies.filter(a => a.owner === 'player');
+    const playerSettlements = settlements.filter(s => s.owner === 'player');
+    
+    enemyArmies.forEach(army => {
+        while (army.movesLeft > 0) {
+            let target = null;
+            let minDist = Infinity;
+            
+            [...playerArmies, ...playerSettlements].forEach(t => {
+                const dist = axialDistance(army, t);
+                if (dist < minDist) {
+                    minDist = dist;
+                    target = t;
+                }
+            });
+            
+            if (target && minDist <= 1) {
+                if (target instanceof Army) {
+                    startBattle(army, target);
+                    return;
+                }
+            }
+            
+            if (target) {
+                const neighbors = getNeighbors(army.q, army.r)
+                    .filter(h => h.type !== 'water');
+                
+                let bestHex = null;
+                let bestDist = minDist;
+                
+                neighbors.forEach(h => {
+                    const dist = axialDistance(h, target);
+                    if (dist < bestDist && !armies.some(a => a.q === h.q && a.r === h.r)) {
+                        bestDist = dist;
+                        bestHex = h;
+                    }
+                });
+                
+                if (bestHex) {
+                    army.q = bestHex.q;
+                    army.r = bestHex.r;
+                }
+            }
+            
+            army.movesLeft--;
+        }
+    });
+    
+    // AI production
+    settlements.filter(s => s.owner === 'enemy').forEach(s => {
+        if (s.productionQueue.length < 2) {
+            const res = factionResources.enemy;
+            const types = ['Knight', 'Archer', 'Mage'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            const cost = TRAINER_TYPES[type].cost;
+            
+            if (res.production >= cost.prod && res.gold >= cost.gold) {
+                s.productionQueue.push({ type, turnsLeft: 3 });
+                res.production -= cost.prod;
+                res.gold -= cost.gold;
+            }
+        }
+    });
+}
+
+function spawnUnit(settlement, type, owner) {
+    // Create medieval unit (NO Pokemon pairing)
+    const unit = new MedievalUnit(type, owner);
+
+    const neighbors = getNeighbors(settlement.q, settlement.r)
+        .filter(h => h.type !== 'water');
+
+    let existingArmy = armies.find(a => a.owner === owner &&
+        neighbors.some(n => n.q === a.q && n.r === a.r));
+
+    if (existingArmy) {
+        existingArmy.addMedievalUnit(unit);
+    } else {
+        const spawnHex = neighbors.find(h =>
+            !armies.some(a => a.q === h.q && a.r === h.r)
+        ) || neighbors[0];
+
+        if (spawnHex) {
+            const newArmy = new Army(spawnHex.q, spawnHex.r, owner);
+            newArmy.addMedievalUnit(unit);
+            armies.push(newArmy);
+        }
+    }
+}
+
+// === BATTLE SYSTEM ===
+function startBattle(attacker, defender) {
+    battleMode = true;
+    battleAttacker = attacker;
+    battleDefender = defender;
+    battleUnits = [];
+    battleProjectiles = [];
+    battleParticles = [];
+    battleFrame = 0;
+    battlePaused = false;
+    battleSpeed = 1;
+    
+    document.getElementById('battle-arena').classList.add('active');
+    
+    const field = document.querySelector('.battle-field');
+    battleCanvas.width = field.clientWidth;
+    battleCanvas.height = field.clientHeight;
+    
+    // Deploy units
+    const spacing = 80;
+    const startY = battleCanvas.height / 2 - ((Math.max(attacker.units.length, defender.units.length) - 1) * spacing) / 2;
+    
+    attacker.units.forEach((u, i) => {
+        battleUnits.push({
+            ...u,
+            x: 150,
+            y: startY + i * spacing,
+            isAttacker: true,
+            state: 'idle',
+            attackCooldown: 0
+        });
+    });
+    
+    defender.units.forEach((u, i) => {
+        battleUnits.push({
+            ...u,
+            x: battleCanvas.width - 150,
+            y: startY + i * spacing,
+            isAttacker: false,
+            state: 'idle',
+            attackCooldown: 0
+        });
+    });
+    
+    addLog('⚔️ Battle begins!', '#ffd700');
+}
+
+function drawBattle() {
+    const ctx = battleCtx;
+    const w = battleCanvas.width;
+    const h = battleCanvas.height;
+    
+    // Clear
+    ctx.clearRect(0, 0, w, h);
+    
+    // Gradient background
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, '#1e3a5f');
+    grad.addColorStop(0.5, '#0c1929');
+    grad.addColorStop(1, '#1a3320');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+    
+    // Arena floor ellipse
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.2)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(w/2, h * 0.7, w * 0.4, h * 0.2, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    // Center pokeball design
+    ctx.beginPath();
+    ctx.arc(w/2, h * 0.7, 60, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(w/2 - 60, h * 0.7);
+    ctx.lineTo(w/2 + 60, h * 0.7);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(w/2, h * 0.7, 15, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    // Draw battle particles
+    battleParticles = battleParticles.filter(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= p.decay;
+        
+        if (p.life > 0) {
+            ctx.fillStyle = `rgba(${p.r}, ${p.g}, ${p.b}, ${p.life})`;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+            ctx.fill();
+            return true;
+        }
+        return false;
+    });
+    
+    // Draw projectiles
+    battleProjectiles.forEach(p => {
+        // Trail
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = p.size;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(p.x - p.vx * 3, p.y - p.vy * 3);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+        
+        // Glow
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 15;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    });
+    
+    // Draw units
+    const bob = Math.sin(battleFrame * 0.05) * 3;
+    
+    battleUnits.forEach(bu => {
+        if (bu.getTotalHp() <= 0) return;
+        
+        const isAttacker = bu.isAttacker;
+        const tx = bu.x;
+        const ty = bu.y;
+        const trainerCol = TRAINER_TYPES[bu.trainerType].color;
+        
+        // Shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.beginPath();
+        ctx.ellipse(tx, ty + 35, 25, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Glow for attacking units
+        if (bu.state === 'attacking') {
+            ctx.shadowColor = TYPE_COLORS[bu.types[0]] || '#fff';
+            ctx.shadowBlur = 20;
+        }
+        
+        // Trainer body
+        ctx.fillStyle = trainerCol;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 2;
+        
+        if (bu.trainerType === 'Knight') {
+            // Shield shape
+            ctx.beginPath();
+            ctx.moveTo(tx, ty - 25);
+            ctx.lineTo(tx + 20, ty - 15);
+            ctx.lineTo(tx + 20, ty + 10);
+            ctx.lineTo(tx, ty + 25);
+            ctx.lineTo(tx - 20, ty + 10);
+            ctx.lineTo(tx - 20, ty - 15);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // Cross emblem
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(tx - 10, ty);
+            ctx.lineTo(tx + 10, ty);
+            ctx.moveTo(tx, ty - 12);
+            ctx.lineTo(tx, ty + 12);
+            ctx.stroke();
+        } else if (bu.trainerType === 'Archer') {
+            // Triangle
+            ctx.beginPath();
+            ctx.moveTo(tx - 18, ty + 25);
+            ctx.lineTo(tx, ty - 25);
+            ctx.lineTo(tx + 18, ty + 25);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // Bow
+            ctx.strokeStyle = '#8b5a2b';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(isAttacker ? tx + 25 : tx - 25, ty, 18, -0.9, 0.9);
+            ctx.stroke();
+        } else if (bu.trainerType === 'Mage') {
+            // Hexagon
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI * 2 / 6) * i - Math.PI / 6;
+                const px = tx + Math.cos(angle) * 22;
+                const py = ty + Math.sin(angle) * 22;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // Staff glow
+            ctx.shadowColor = '#a855f7';
+            ctx.shadowBlur = 15;
+            ctx.fillStyle = 'rgba(200, 100, 255, 0.8)';
+            ctx.beginPath();
+            ctx.arc(isAttacker ? tx + 30 : tx - 30, ty - 20, 10, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        ctx.shadowBlur = 0;
+        
+        // Pokemon sprite
+        const sprite = spriteCache.get(bu.pokemonId);
+        if (sprite) {
+            const px = isAttacker ? tx + 40 : tx - 40;
+            ctx.drawImage(sprite, px - 25, ty - 30 + bob * 0.5, 50, 50);
+        }
+        
+        // Health bar background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(bu.x - 35, bu.y - 50, 70, 10, 3);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Health bar
+        const totalHp = bu.getTotalHp();
+        const maxHp = bu.getTotalMaxHp();
+        const hpPercent = Math.max(0, totalHp / maxHp);
+        
+        const hpGrad = ctx.createLinearGradient(bu.x - 35, 0, bu.x + 35, 0);
+        if (hpPercent > 0.6) {
+            hpGrad.addColorStop(0, '#22c55e');
+            hpGrad.addColorStop(1, '#15803d');
+        } else if (hpPercent > 0.3) {
+            hpGrad.addColorStop(0, '#f59e0b');
+            hpGrad.addColorStop(1, '#d97706');
+        } else {
+            hpGrad.addColorStop(0, '#ef4444');
+            hpGrad.addColorStop(1, '#b91c1c');
+        }
+        
+        ctx.fillStyle = hpGrad;
+        ctx.beginPath();
+        ctx.roundRect(bu.x - 34, bu.y - 49, 68 * hpPercent, 8, 2);
+        ctx.fill();
+        
+        // Type badge
+        const typeCol = TYPE_COLORS[bu.types[0]] || '#888';
+        ctx.fillStyle = typeCol;
+        ctx.beginPath();
+        ctx.roundRect(bu.x - 20, bu.y + 35, 40, 14, 3);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 9px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(bu.types[0].toUpperCase(), bu.x, bu.y + 45);
+    });
+    
+    // Update UI
+    const playerAlive = battleUnits.filter(u => u.isAttacker && u.getTotalHp() > 0).length;
+    const enemyAlive = battleUnits.filter(u => !u.isAttacker && u.getTotalHp() > 0).length;
+    document.getElementById('player-units-count').innerText = playerAlive;
+    document.getElementById('enemy-units-count').innerText = enemyAlive;
+}
+
+function updateBattle() {
+    battleFrame++;
+    
+    // Update projectiles
+    battleProjectiles = battleProjectiles.filter(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        
+        const target = battleUnits.find(u => 
+            u.isAttacker !== p.fromAttacker && 
+            u.getTotalHp() > 0 &&
+            Math.hypot(u.x - p.x, u.y - p.y) < 30
+        );
+        
+        if (target) {
+            applyDamage(p.source, target, p.damage);
+            spawnBattleParticles(p.x, p.y, p.color, 12);
+            return false;
+        }
+        
+        return p.x > 0 && p.x < battleCanvas.width && p.y > 0 && p.y < battleCanvas.height;
+    });
+    
+    const attackerUnits = battleUnits.filter(u => u.isAttacker && u.getTotalHp() > 0);
+    const defenderUnits = battleUnits.filter(u => !u.isAttacker && u.getTotalHp() > 0);
+    
+    // Check victory
+    if (attackerUnits.length === 0 || defenderUnits.length === 0) {
+        setTimeout(() => endBattleWithResult(defenderUnits.length === 0), 500);
+        return;
+    }
+    
+    battleUnits.forEach(bu => {
+        if (bu.getTotalHp() <= 0) return;
+        
+        bu.attackCooldown = Math.max(0, bu.attackCooldown - 1);
+        
+        const enemies = bu.isAttacker ? defenderUnits : attackerUnits;
+        if (enemies.length === 0) return;
+        
+        // Find nearest
+        let nearestEnemy = null;
+        let nearestDist = Infinity;
+        enemies.forEach(e => {
+            const d = Math.hypot(e.x - bu.x, e.y - bu.y);
+            if (d < nearestDist) {
+                nearestDist = d;
+                nearestEnemy = e;
+            }
+        });
+        
+        if (!nearestEnemy) return;
+        
+        if (nearestDist > bu.range) {
+            bu.state = 'moving';
+            const dx = nearestEnemy.x - bu.x;
+            const dy = nearestEnemy.y - bu.y;
+            const mag = Math.hypot(dx, dy);
+            bu.x += (dx / mag) * bu.speed * 0.8;
+            bu.y += (dy / mag) * bu.speed * 0.8;
+        } else {
+            bu.state = 'attacking';
+            if (bu.attackCooldown <= 0) {
+                if (bu.trainerType === 'Archer' || bu.trainerType === 'Mage') {
+                    fireProjectile(bu, nearestEnemy);
+                } else {
+                    applyDamage(bu, nearestEnemy);
+                    spawnBattleParticles(nearestEnemy.x, nearestEnemy.y, '#fff', 8);
+                }
+                bu.attackCooldown = 60;
+            }
+        }
+        
+        // Collision avoidance
+        battleUnits.forEach(other => {
+            if (other === bu || other.getTotalHp() <= 0) return;
+            const d = Math.hypot(other.x - bu.x, other.y - bu.y);
+            if (d < 50 && d > 0) {
+                const push = (50 - d) / 2;
+                const dx = (bu.x - other.x) / d;
+                const dy = (bu.y - other.y) / d;
+                bu.x += dx * push * 0.3;
+                bu.y += dy * push * 0.3;
+            }
+        });
+        
+        // Bounds
+        bu.x = Math.max(60, Math.min(battleCanvas.width - 60, bu.x));
+        bu.y = Math.max(100, Math.min(battleCanvas.height - 80, bu.y));
+    });
+}
+
+function spawnBattleParticles(x, y, colStr, count) {
+    const col = colStr.match(/\w\w/g)?.map(c => parseInt(c, 16)) || [255, 255, 255];
+    for (let i = 0; i < count; i++) {
+        battleParticles.push({
+            x, y,
+            vx: (Math.random() - 0.5) * 8,
+            vy: (Math.random() - 0.5) * 8,
+            r: col[0] || 255,
+            g: col[1] || 255,
+            b: col[2] || 255,
+            size: Math.random() * 6 + 3,
+            life: 1,
+            decay: Math.random() * 0.03 + 0.02
+        });
+    }
+}
+
+function fireProjectile(source, target) {
+    const dx = target.x - source.x;
+    const dy = target.y - source.y;
+    const mag = Math.hypot(dx, dy);
+    const speed = source.trainerType === 'Archer' ? 10 : 7;
+    
+    const pColor = TYPE_COLORS[source.types?.[0]] || '#ffffff';
+    
+    battleProjectiles.push({
+        x: source.x + (source.isAttacker ? 35 : -35),
+        y: source.y,
+        vx: (dx / mag) * speed,
+        vy: (dy / mag) * speed,
+        damage: source.getTotalAttack() * 0.15,
+        source: source,
+        fromAttacker: source.isAttacker,
+        color: pColor,
+        size: source.trainerType === 'Mage' ? 10 : 6
+    });
+}
+
+function applyDamage(attacker, defender, baseDamage = null) {
+    // Base damage calculation
+    let damage = baseDamage;
+    if (!damage) {
+        if (attacker.getTotalAttack) {
+            damage = attacker.getTotalAttack() * 0.1;
+        } else if (attacker.attack) {
+            damage = attacker.attack * 0.1;
+        } else {
+            damage = 10;
+        }
+    }
+
+    // Type effectiveness ONLY if attacker is Pokemon attacking Pokemon
+    let effectiveness = 1;
+    let effText = '';
+    if (attacker.unitClass === 'pokemon' && defender.unitClass === 'pokemon') {
+        effectiveness = getTypeEffectiveness(attacker.types, defender.types);
+        if (effectiveness === 0) {
+            damage = 0;
+            effText = ' (No Effect)';
+        } else {
+            damage *= effectiveness;
+            if (effectiveness > 1) effText = ' (Super Effective!)';
+            else if (effectiveness < 1) effText = ' (Not Very Effective)';
+        }
+    }
+
+    // Defense reduction
+    const defenseMultiplier = 100 / (100 + (defender.defense || 0));
+    damage *= defenseMultiplier;
+
+    // Shield check (for Pokemon with Protect ability)
+    if (defender.shielded) {
+        damage *= 0.3;
+        if (spawnBattleParticles) spawnBattleParticles(defender.x, defender.y, '#60a5fa', 8);
+    }
+
+    // Random variance
+    damage = Math.floor(damage * (0.9 + Math.random() * 0.2));
+
+    // Apply damage based on unit type
+    if (defender.pokemonHp !== undefined && defender.trainerHp !== undefined) {
+        // Legacy Unit class
+        if (defender.pokemonHp > 0) {
+            const pokeDmg = Math.min(defender.pokemonHp, damage);
+            defender.pokemonHp -= pokeDmg;
+            damage -= pokeDmg;
+        }
+        if (damage > 0) {
+            defender.trainerHp -= damage;
+        }
+    } else {
+        // New unit types (MedievalUnit or PokemonUnit)
+        defender.hp -= damage;
+    }
+
+    // Logging
+    const attackerName = attacker.unitClass === 'pokemon' ? attacker.name :
+                         attacker.unitClass === 'medieval' ? attacker.type :
+                         POKEMON_DATA[attacker.pokemonId]?.name || 'Unknown';
+    const defenderName = defender.unitClass === 'pokemon' ? defender.name :
+                         defender.unitClass === 'medieval' ? defender.type :
+                         POKEMON_DATA[defender.pokemonId]?.name || 'Unknown';
+
+    addLog(`${attackerName} hits ${defenderName} for ${Math.floor(damage)} damage${effText}`, '#ef4444');
+}
+
+function getTypeEffectiveness(attackerTypes, defenderTypes) {
+    let mult = 1;
+    attackerTypes?.forEach(aType => {
+        defenderTypes?.forEach(dType => {
+            const eff = TYPE_EFFECTIVENESS[aType]?.[dType];
+            if (eff !== undefined) mult *= eff;
+        });
+    });
+    return mult;
+}
+
+function endBattleWithResult(attackerWins) {
+    battleMode = false;
+    document.getElementById('battle-arena').classList.remove('active');
+    
+    if (attackerWins) {
+        // Attacker wins
+        const survivors = battleUnits.filter(u => u.isAttacker && u.getTotalHp() > 0);
+        battleAttacker.units = survivors.map(bu => {
+            const unit = battleAttacker.units.find(u => u.id === bu.id);
+            if (unit) {
+                unit.trainerHp = bu.trainerHp;
+                unit.pokemonHp = bu.pokemonHp;
+            }
+            return unit;
+        }).filter(u => u);
+        
+        battleAttacker.q = battleDefender.q;
+        battleAttacker.r = battleDefender.r;
+        armies = armies.filter(a => a !== battleDefender);
+        
+        addLog('⚔️ Victory! Enemy defeated.', '#22c55e');
+    } else {
+        // Defender wins
+        const survivors = battleUnits.filter(u => !u.isAttacker && u.getTotalHp() > 0);
+        battleDefender.units = survivors.map(bu => {
+            const unit = battleDefender.units.find(u => u.id === bu.id);
+            if (unit) {
+                unit.trainerHp = bu.trainerHp;
+                unit.pokemonHp = bu.pokemonHp;
+            }
+            return unit;
+        }).filter(u => u);
+        
+        armies = armies.filter(a => a !== battleAttacker);
+        
+        addLog('💀 Defeat! Your army was destroyed.', '#ef4444');
+    }
+    
+    // Clean up empty armies
+    armies = armies.filter(a => a.getUnitCount() > 0);
+    
+    battleAttacker = null;
+    battleDefender = null;
+    selectedArmy = null;
+    
+    updateVisibility();
+    updateUI();
+}
+
+function toggleBattlePause() {
+    battlePaused = !battlePaused;
+}
+
+function setBattleSpeed(speed) {
+    battleSpeed = speed;
+}
+
+function retreatBattle() {
+    // Lose 30% of units
+    const lossCount = Math.ceil(battleAttacker.units.length * 0.3);
+    for (let i = 0; i < lossCount; i++) {
+        battleAttacker.units.pop();
+    }
+    
+    battleMode = false;
+    document.getElementById('battle-arena').classList.remove('active');
+    addLog('🏃 Retreated! Lost some units.', '#f59e0b');
+    
+    battleAttacker = null;
+    battleDefender = null;
+    selectedArmy = null;
+    updateUI();
+}
+
+// === UI FUNCTIONS ===
+function updateUI() {
+    document.getElementById('food-count').innerText = factionResources.player.food;
+    document.getElementById('prod-count').innerText = factionResources.player.production;
+    document.getElementById('gold-count').innerText = factionResources.player.gold;
+    document.getElementById('turn-counter').innerText = turn;
+}
+
+function updateSelectionPanel() {
+    const panel = document.getElementById('selection-panel');
+    const info = document.getElementById('selection-info');
+    
+    if (!selectedArmy) {
+        panel.style.display = 'none';
+        return;
+    }
+    
+    panel.style.display = 'block';
+    
+    let html = `<div class="mb-2"><strong>${selectedArmy.getUnitCount()} Units</strong> | Strength: ${selectedArmy.getTotalStrength()}</div>`;
+    html += `<div class="text-xs text-slate-400">Moves: ${selectedArmy.movesLeft}/2</div>`;
+    html += '<div class="mt-2 space-y-1">';
+    
+    selectedArmy.units.slice(0, 5).forEach(u => {
+        const pokemon = POKEMON_DATA[u.pokemonId];
+        const typeCol = TYPE_COLORS[u.types[0]] || '#888';
+        html += `<div class="flex items-center gap-2 text-xs">
+            <span style="color:${TRAINER_TYPES[u.trainerType].color}">${u.trainerType}</span>
+            <span style="background:${typeCol};padding:1px 6px;border-radius:3px;">${pokemon?.name || 'Unknown'}</span>
+        </div>`;
+    });
+    
+    if (selectedArmy.units.length > 5) {
+        html += `<div class="text-xs text-slate-500">+${selectedArmy.units.length - 5} more...</div>`;
+    }
+    
+    html += '</div>';
+    info.innerHTML = html;
+}
+
+function updateHexPanel() {
+    const panel = document.getElementById('hex-panel');
+    const info = document.getElementById('hex-info');
+    
+    if (!hoveredHex || !hoveredHex.explored) {
+        panel.style.display = 'none';
+        return;
+    }
+    
+    panel.style.display = 'block';
+    
+    const terrainNames = {
+        grass: '🌿 Grassland',
+        plains: '🌾 Plains',
+        forest: '🌲 Forest',
+        mountain: '⛰️ Mountain',
+        water: '🌊 Water'
+    };
+    
+    let html = `<div>${terrainNames[hoveredHex.type] || hoveredHex.type}</div>`;
+    html += `<div class="text-xs text-slate-400 mt-1">(${hoveredHex.q}, ${hoveredHex.r})</div>`;
+    
+    if (hoveredHex.owner !== 'none') {
+        const ownerCol = hoveredHex.owner === 'player' ? '#3b82f6' : '#ef4444';
+        html += `<div class="text-xs mt-1" style="color:${ownerCol}">${hoveredHex.owner === 'player' ? 'Your' : 'Enemy'} Territory</div>`;
+    }
+    
+    if (hoveredHex.type !== 'water') {
+        const r = hoveredHex.resources;
+        html += `<div class="flex gap-2 mt-2 text-xs">`;
+        if (r.food) html += `<span class="text-green-400">🌾${r.food}</span>`;
+        if (r.production) html += `<span class="text-orange-400">⚒${r.production}</span>`;
+        if (r.gold) html += `<span class="text-yellow-400">💰${r.gold}</span>`;
+        html += `</div>`;
+    }
+    
+    info.innerHTML = html;
+}
+
+function openSettlementModal(settlement) {
+    selectedSettlement = settlement;
+    const modal = document.getElementById('settlement-modal');
+    const nameEl = document.getElementById('settlement-name');
+    const detailsEl = document.getElementById('settlement-details');
+    
+    nameEl.innerText = `🏰 ${settlement.name}`;
+    
+    const output = settlement.getResourceOutput();
+    
+    let html = `<div class="grid grid-cols-3 gap-4 mb-4 text-center">
+        <div class="bg-green-900/30 p-3 rounded-lg border border-green-700">
+            <div class="text-green-400 text-lg font-bold">+${output.food}</div>
+            <div class="text-xs text-green-300">Food/turn</div>
+        </div>
+        <div class="bg-orange-900/30 p-3 rounded-lg border border-orange-700">
+            <div class="text-orange-400 text-lg font-bold">+${output.production}</div>
+            <div class="text-xs text-orange-300">Prod/turn</div>
+        </div>
+        <div class="bg-yellow-900/30 p-3 rounded-lg border border-yellow-700">
+            <div class="text-yellow-400 text-lg font-bold">+${output.gold}</div>
+            <div class="text-xs text-yellow-300">Gold/turn</div>
+        </div>
+    </div>`;
+    
+    // Production queue
+    html += `<div class="mb-4">
+        <div class="text-sm text-slate-400 mb-2">Production Queue (${settlement.productionQueue.length}/5)</div>
+        <div class="bg-slate-800/50 rounded-lg p-2 min-h-[40px]">`;
+    
+    if (settlement.productionQueue.length === 0) {
+        html += `<div class="text-slate-500 text-sm text-center">Empty - Train units below</div>`;
+    } else {
+        settlement.productionQueue.forEach((item, i) => {
+            html += `<div class="flex justify-between items-center py-1 ${i > 0 ? 'border-t border-slate-700' : ''}">
+                <span style="color:${TRAINER_TYPES[item.type].color}">${item.type}</span>
+                <span class="text-xs text-slate-400">${item.turnsLeft} turns</span>
+            </div>`;
+        });
+    }
+    
+    html += `</div></div>`;
+    
+    // Training options
+    html += `<div class="text-sm text-slate-400 mb-2">Train Units</div>
+        <div class="grid grid-cols-2 gap-2">`;
+    
+    ['Knight', 'Archer', 'Mage', 'Settler'].forEach(type => {
+        const trainer = TRAINER_TYPES[type];
+        const canAfford = factionResources.player.production >= trainer.cost.prod && 
+                         factionResources.player.gold >= trainer.cost.gold;
+        const disabled = settlement.productionQueue.length >= 5 || !canAfford;
+        
+        html += `<button onclick="trainUnit('${type}')" 
+            class="p-2 rounded-lg border text-left ${disabled ? 'opacity-50 cursor-not-allowed bg-slate-800 border-slate-600' : 'bg-slate-700 border-slate-500 hover:border-yellow-500 cursor-pointer'}"
+            ${disabled ? 'disabled' : ''}>
+            <div style="color:${trainer.color}" class="font-bold">${type}</div>
+            <div class="text-xs text-slate-400">⚒${trainer.cost.prod} 💰${trainer.cost.gold}</div>
+        </button>`;
+    });
+    
+    html += `</div>`;
+    
+    detailsEl.innerHTML = html;
+    modal.classList.add('active');
+}
+
+function closeSettlementModal() {
+    document.getElementById('settlement-modal').classList.remove('active');
+    selectedSettlement = null;
+}
+
+function trainUnit(type) {
+    if (!selectedSettlement) return;
+    
+    const trainer = TRAINER_TYPES[type];
+    const res = factionResources.player;
+    
+    if (selectedSettlement.productionQueue.length >= 5) return;
+    if (res.production < trainer.cost.prod || res.gold < trainer.cost.gold) return;
+    
+    res.production -= trainer.cost.prod;
+    res.gold -= trainer.cost.gold;
+    
+    selectedSettlement.productionQueue.push({ type, turnsLeft: 3 });
+    
+    addLog(`${selectedSettlement.name} begins training ${type}`, '#60a5fa');
+    updateUI();
+    openSettlementModal(selectedSettlement);
+}
+
+function addLog(message, color = '#fff') {
+    combatLog.unshift({ message, color, time: Date.now() });
+    if (combatLog.length > 50) combatLog.pop();
+    
+    const container = document.getElementById('log-entries');
+    container.innerHTML = combatLog.slice(0, 20).map(log => 
+        `<div class="log-entry" style="color:${log.color}">${log.message}</div>`
+    ).join('');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+import type { PokemonData } from '../types';
+
+export const POKEMON_DATA: Record<number, PokemonData> = {
+    252: { name: 'Treecko', types: ['grass'], hp: 40, attack: 45, defense: 35, speed: 1.8, range: 80, role: 'damage', abilities: ['quick_attack'], spriteId: '0252' },
+    253: { name: 'Grovyle', types: ['grass'], hp: 50, attack: 65, defense: 45, speed: 2.0, range: 90, role: 'damage', abilities: ['quick_attack'], spriteId: '0253' },
+    254: { name: 'Sceptile', types: ['grass'], hp: 70, attack: 85, defense: 65, speed: 2.2, range: 100, role: 'damage', abilities: ['quick_attack'], spriteId: '0254' },
+    255: { name: 'Torchic', types: ['fire'], hp: 45, attack: 60, defense: 40, speed: 1.7, range: 70, role: 'damage', abilities: ['quick_attack'], spriteId: '0255' },
+    256: { name: 'Combusken', types: ['fire', 'fighting'], hp: 60, attack: 85, defense: 58, speed: 1.9, range: 75, role: 'damage', abilities: ['quick_attack'], spriteId: '0256' },
+    257: { name: 'Blaziken', types: ['fire', 'fighting'], hp: 80, attack: 120, defense: 70, speed: 2.1, range: 80, role: 'damage', abilities: ['quick_attack'], spriteId: '0257' },
+    258: { name: 'Mudkip', types: ['water'], hp: 50, attack: 70, defense: 50, speed: 1.5, range: 70, role: 'tank', abilities: ['protect'], spriteId: '0258' },
+    259: { name: 'Marshtomp', types: ['water', 'ground'], hp: 70, attack: 85, defense: 70, speed: 1.6, range: 75, role: 'tank', abilities: ['earthquake'], spriteId: '0259' },
+    260: { name: 'Swampert', types: ['water', 'ground'], hp: 100, attack: 110, defense: 90, speed: 1.4, range: 70, role: 'tank', abilities: ['earthquake', 'protect'], spriteId: '0260' },
+    25: { name: 'Pikachu', types: ['electric'], hp: 35, attack: 55, defense: 40, speed: 2.3, range: 120, role: 'control', abilities: ['freeze'], spriteId: '0025' },
+    26: { name: 'Raichu', types: ['electric'], hp: 60, attack: 90, defense: 55, speed: 2.5, range: 130, role: 'control', abilities: ['freeze'], spriteId: '0026' },
+    309: { name: 'Electrike', types: ['electric'], hp: 40, attack: 45, defense: 40, speed: 2.1, range: 110, role: 'control', abilities: ['freeze'], spriteId: '0309' },
+    310: { name: 'Manectric', types: ['electric'], hp: 70, attack: 75, defense: 60, speed: 2.3, range: 120, role: 'control', abilities: ['freeze'], spriteId: '0310' },
+    280: { name: 'Ralts', types: ['psychic'], hp: 28, attack: 25, defense: 25, speed: 1.5, range: 100, role: 'support', abilities: ['heal_pulse'], spriteId: '0280' },
+    281: { name: 'Kirlia', types: ['psychic'], hp: 38, attack: 35, defense: 35, speed: 1.7, range: 110, role: 'support', abilities: ['heal_pulse'], spriteId: '0281' },
+    282: { name: 'Gardevoir', types: ['psychic'], hp: 68, attack: 65, defense: 65, speed: 2.0, range: 120, role: 'support', abilities: ['heal_pulse', 'revive'], spriteId: '0282' },
+    307: { name: 'Meditite', types: ['fighting', 'psychic'], hp: 30, attack: 40, defense: 55, speed: 1.6, range: 70, role: 'damage', abilities: ['quick_attack'], spriteId: '0307' },
+    308: { name: 'Medicham', types: ['fighting', 'psychic'], hp: 60, attack: 60, defense: 75, speed: 1.8, range: 80, role: 'damage', abilities: ['quick_attack'], spriteId: '0308' },
+    371: { name: 'Bagon', types: ['dragon'], hp: 45, attack: 75, defense: 60, speed: 1.6, range: 70, role: 'damage', abilities: ['quick_attack'], spriteId: '0371' },
+    372: { name: 'Shelgon', types: ['dragon'], hp: 65, attack: 95, defense: 100, speed: 1.4, range: 70, role: 'tank', abilities: ['protect'], spriteId: '0372' },
+    373: { name: 'Salamence', types: ['dragon', 'flying'], hp: 95, attack: 135, defense: 80, speed: 2.2, range: 90, role: 'damage', abilities: ['quick_attack', 'earthquake'], spriteId: '0373' },
+    304: { name: 'Aron', types: ['steel', 'rock'], hp: 50, attack: 70, defense: 100, speed: 1.2, range: 60, role: 'tank', abilities: ['protect'], spriteId: '0304' },
+    305: { name: 'Lairon', types: ['steel', 'rock'], hp: 60, attack: 90, defense: 140, speed: 1.3, range: 65, role: 'tank', abilities: ['protect'], spriteId: '0305' },
+    306: { name: 'Aggron', types: ['steel', 'rock'], hp: 70, attack: 110, defense: 180, speed: 1.4, range: 70, role: 'tank', abilities: ['protect', 'earthquake'], spriteId: '0306' },
+    263: { name: 'Zigzagoon', types: ['normal'], hp: 38, attack: 30, defense: 41, speed: 1.8, range: 70, role: 'support', abilities: ['heal_pulse'], spriteId: '0263' },
+    264: { name: 'Linoone', types: ['normal'], hp: 78, attack: 70, defense: 61, speed: 2.0, range: 80, role: 'support', abilities: ['heal_pulse'], spriteId: '0264' },
+    285: { name: 'Shroomish', types: ['grass'], hp: 60, attack: 40, defense: 60, speed: 1.3, range: 70, role: 'tank', abilities: ['protect'], spriteId: '0285' },
+    286: { name: 'Breloom', types: ['grass', 'fighting'], hp: 60, attack: 130, defense: 80, speed: 1.8, range: 75, role: 'damage', abilities: ['quick_attack'], spriteId: '0286' }
+};
