@@ -36,9 +36,7 @@ export interface TileAtlas {
         scaleFactor: number;
     };
     sources: {
-        nature: string;
-        coastal: string;
-        lpc: string;
+        [key: string]: string;
     };
     terrain_map: {
         [key: string]: TileDefinition;
@@ -60,7 +58,10 @@ export const TILE_ATLAS: TileAtlas = {
     sources: {
         nature: "/tilesets/nature.png",
         coastal: "/tilesets/coastal.png",
-        lpc: "/sprites/units/lpc-units.png"
+        overworld: "/tilesets/overworld-frlg.png",
+        buildings_objects: "/tilesets/buildings-objects.png",
+        lpc: "/sprites/units/lpc-units.png",
+        ui: "/sprites/ui/elements/Spritesheet_UI_Flat.png"
     },
     // Mapping terrain types from Hex.ts to specific sprite coordinates
     terrain_map: {

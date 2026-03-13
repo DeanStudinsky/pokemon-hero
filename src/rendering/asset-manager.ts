@@ -52,7 +52,10 @@ export async function preloadTilesheets(): Promise<void> {
     const promises = [
         loadTilesheet('nature'),
         loadTilesheet('coastal'),
-        loadTilesheet('lpc')
+        loadTilesheet('overworld'),
+        loadTilesheet('buildings_objects'),
+        loadTilesheet('lpc'),
+        loadTilesheet('ui')
     ];
 
     try {
@@ -75,7 +78,8 @@ export function getTilesheet(name: string): HTMLImageElement | null {
  * Check if all assets are loaded
  */
 export function areAssetsLoaded(): boolean {
-    return imageCache.has('nature') && imageCache.has('coastal') && imageCache.has('lpc');
+    return imageCache.has('nature') && imageCache.has('coastal') && imageCache.has('lpc')
+        && imageCache.has('overworld') && imageCache.has('buildings_objects');
 }
 
 /**

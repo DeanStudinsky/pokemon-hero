@@ -7,3 +7,10 @@ dist/
 *.swp
 *.swo
 *~
+
+# Source asset repos (cloned for sprite extraction, not tracked)
+assets/pokesprite/
+
+# Compressed source archives (extracted contents are tracked)
+assets/*.7z
+assets/*.zip
