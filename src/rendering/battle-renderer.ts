@@ -114,7 +114,7 @@ function renderMedievalUnit(ctx: CanvasRenderingContext2D, unit: BattleUnit): vo
 function renderPokemonUnit(ctx: CanvasRenderingContext2D, unit: BattleUnit): void {
     // Try to load and render sprite
     if (unit.pokemonId) {
-        const spriteId = unit.pokemonId.toString().padStart(4, '0');
+        const spriteId = `${unit.pokemonId}-b-n`;
         loadPokemonSprite(spriteId).then(sprite => {
             // Sprite will be cached and rendered next frame
             ctx.drawImage(sprite, unit.x - 25, unit.y - 25, 50, 50);

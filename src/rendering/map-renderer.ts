@@ -4,8 +4,9 @@ import type { Settlement } from '@entities/Settlement';
 import type { WildPokemon } from '@entities/WildPokemon';
 import type { ScreenCoords } from '../types';
 import { THEME, HEX_SIZE } from '@config/constants';
-import { TILE_ATLAS, getTreeForHex, getTerrainSprite } from '@config/tile-atlas';
+import { TILE_ATLAS, getTreeForHex } from '@config/tile-atlas';
 import { drawSprite, areAssetsLoaded } from './asset-manager';
+import { getHexTile, isHexCacheReady, HEX_CX, HEX_CY } from './hex-tile-cache';
 import { POKEMON_DATA } from '@config/pokemon-data';
 import { axialToScreen } from '@utils/hex-math';
 
@@ -38,7 +39,7 @@ function drawHexOutline(
 }
 
 /**
- * Render terrain tile (ground layer)
+ * Render terrain tile (ground layer) using pre-rendered hex-clipped cache
  */
 function renderTerrainTile(
     ctx: CanvasRenderingContext2D,
@@ -46,30 +47,18 @@ function renderTerrainTile(
     camera: ScreenCoords
 ): void {
     const { x, y } = axialToScreen(hex.q, hex.r, camera);
-    const tileDef = getTerrainSprite(hex.type);
-    const scale = TILE_ATLAS.meta.scaleFactor;
-    const tileSize = TILE_ATLAS.meta.tileSize;
 
-    // If assets not loaded, use fallback colored hex
-    if (!areAssetsLoaded()) {
-        renderFallbackHex(ctx, hex, x, y);
-        return;
+    // Use cached hex-clipped tiles (handles fog of war automatically)
+    if (isHexCacheReady()) {
+        const tile = getHexTile(hex.type, hex.q, hex.r, hex.visible, hex.explored);
+        if (tile) {
+            ctx.drawImage(tile, x - HEX_CX, y - HEX_CY);
+            return;
+        }
     }
 
-    // Draw the terrain sprite centered on hex
-    const drawSize = tileSize * scale;
-    drawSprite(
-        ctx,
-        tileDef.source,
-        tileDef.x,
-        tileDef.y,
-        tileSize,
-        tileSize,
-        x - drawSize / 2,
-        y - drawSize / 2,
-        drawSize,
-        drawSize
-    );
+    // Fallback if cache not ready
+    renderFallbackHex(ctx, hex, x, y);
 }
 
 /**
@@ -154,141 +143,8 @@ export function renderObjectsLayer(
 ): void {
     const renderQueue: RenderObject[] = [];
 
-    // Add trees from forest hexes
-    grid.forEach(hex => {
-        if (hex.type === 'forest' && hex.visible && areAssetsLoaded()) {
-            const { x, y } = axialToScreen(hex.q, hex.r, camera);
-            const tree = getTreeForHex(hex.q, hex.r);
-            const scale = TILE_ATLAS.meta.scaleFactor;
-
-            renderQueue.push({
-                y: y, // Sort by hex center Y
-                render: (ctx) => {
-                    const drawWidth = tree.w * scale;
-                    const drawHeight = tree.h * scale;
-                    const anchorY = tree.anchor_y * scale;
-
-                    drawSprite(
-                        ctx,
-                        tree.source,
-                        tree.x,
-                        tree.y,
-                        tree.w,
-                        tree.h,
-                        x - drawWidth / 2,
-                        y - anchorY,
-                        drawWidth,
-                        drawHeight
-                    );
-                }
-            });
-        }
-    });
-
-    // Add settlements
-    settlements.forEach(settlement => {
-        const hex = grid.get(settlement.getKey());
-        if (!hex || !hex.visible) return;
-
-        const { x, y } = axialToScreen(hex.q, hex.r, camera);
-
-        renderQueue.push({
-            y: y,
-            render: (ctx) => {
-                // Settlement icon
-                ctx.fillStyle = settlement.owner === 'player' ? THEME.player : THEME.enemy;
-                ctx.font = '28px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('🏰', x, y - 10);
-
-                // Settlement name
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 10px Arial';
-                ctx.fillText(settlement.name, x, y + 15);
-
-                // Pokemon Center indicator
-                if (settlement.buildings.pokemonCenter) {
-                    ctx.fillText('🏥', x - 15, y - 10);
-                }
-            }
-        });
-    });
-
-    // Add wild Pokemon
-    wildPokemon.forEach(wp => {
-        if (wp.captured) return;
-
-        const hex = grid.get(wp.getKey());
-        if (!hex || !hex.visible) return;
-
-        const { x, y } = axialToScreen(hex.q, hex.r, camera);
-
-        renderQueue.push({
-            y: y,
-            render: (ctx) => {
-                // Sparkle effect
-                ctx.fillStyle = THEME.gold;
-                ctx.font = '20px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('✨', x, y - 15);
-
-                // Pokemon indicator
-                ctx.fillStyle = '#ffffff';
-                ctx.font = '16px Arial';
-                ctx.fillText('🔴', x, y);
-
-                // Pokemon name if discovered
-                if (wp.discovered) {
-                    const data = POKEMON_DATA[wp.pokemonId];
-                    if (data) {
-                        ctx.fillStyle = '#ffffff';
-                        ctx.font = 'bold 9px Arial';
-                        ctx.fillText(data.name, x, y + 18);
-                    }
-                }
-            }
-        });
-    });
-
-    // Add armies
-    armies.forEach(army => {
-        const hex = grid.get(army.getKey());
-        if (!hex || !hex.visible) return;
-
-        const { x, y } = axialToScreen(hex.q, hex.r, camera);
-
-        renderQueue.push({
-            y: y,
-            render: (ctx) => {
-                // Army background
-                ctx.fillStyle = army.owner === 'player' ? THEME.player : THEME.enemy;
-                ctx.globalAlpha = 0.7;
-                ctx.beginPath();
-                ctx.arc(x, y, 20, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.globalAlpha = 1;
-
-                // Unit count
-                const medievalCount = army.medievalUnits.length;
-                const pokemonCount = army.pokemon.length;
-
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 12px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(`${medievalCount}`, x - 8, y);
-
-                // Pokemon indicator
-                if (pokemonCount > 0) {
-                    ctx.fillStyle = THEME.gold;
-                    ctx.font = 'bold 10px Arial';
-                    ctx.fillText(`⭐${pokemonCount}`, x + 8, y + 12);
-                }
-            }
-        });
-    });
+    // TODO: Re-enable trees once proper sprite coordinates are mapped
+    // TODO: Re-enable settlements, wild pokemon, armies with proper sprites
 
     // Sort by Y coordinate (painter's algorithm)
     renderQueue.sort((a, b) => a.y - b.y);

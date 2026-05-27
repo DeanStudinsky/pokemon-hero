@@ -1,4 +1,5 @@
 import { TILE_ATLAS } from '@config/tile-atlas';
+import { buildHexTileCache } from './hex-tile-cache';
 
 /**
  * Asset Manager - Handles loading and caching of sprite sheets
@@ -61,9 +62,14 @@ export async function preloadTilesheets(): Promise<void> {
     try {
         await Promise.all(promises);
         console.log('✅ All tilesheets loaded');
+        // Build hex-clipped tile cache now that assets are available
+        buildHexTileCache();
+        console.log('✅ Hex tile cache built');
     } catch (error) {
         console.error('❌ Failed to load some tilesheets:', error);
         // Continue anyway - will use fallback rendering
+        // Still try to build cache with whatever loaded
+        buildHexTileCache();
     }
 }
 

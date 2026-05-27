@@ -65,14 +65,14 @@ export const TILE_ATLAS: TileAtlas = {
     },
     // Mapping terrain types from Hex.ts to specific sprite coordinates
     terrain_map: {
-        water: { source: "nature", x: 0, y: 0 },       // Deep Ocean
-        water_shore: { source: "nature", x: 16, y: 0 }, // Shallow/Shore
-        sand: { source: "nature", x: 0, y: 16 },       // Sand
-        grass: { source: "nature", x: 16, y: 16 },     // Basic Grass
-        plains: { source: "nature", x: 32, y: 16 },    // Plains (lighter grass)
+        water: { source: "nature", x: 16, y: 16 },       // TODO: proper water tile
+        water_shore: { source: "nature", x: 16, y: 16 }, // TODO: proper shore tile
+        sand: { source: "nature", x: 16, y: 16 },       // TODO: proper sand tile
+        grass: { source: "nature", x: 16, y: 16 },     // Basic Grass (looks good!)
+        plains: { source: "nature", x: 16, y: 16 },    // TODO: proper plains tile
         forest: { source: "nature", x: 16, y: 16 },    // Forest uses grass base + tree object
-        mountain: { source: "nature", x: 48, y: 16 },  // Rocky terrain
-        berry_grove: { source: "nature", x: 32, y: 0 }, // Berry grove (using sand sprite as placeholder)
+        mountain: { source: "nature", x: 16, y: 16 },  // TODO: proper mountain tile
+        berry_grove: { source: "nature", x: 16, y: 16 }, // TODO: proper berry grove tile
     },
     // Large objects that sit ON TOP of a hex (Anchor: Bottom-Center)
     objects: {
